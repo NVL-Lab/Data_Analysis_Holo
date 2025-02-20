@@ -365,11 +365,15 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
         'Holostim': _Holostim,
         'HoloE2': _HoloE2,
         'HoloE3': _HoloE3,
-        'Random_Reward': _Random_Reward
+        'Random_Reward': _Random_Reward,
+        'Feedback_BMI_Random_Reward': _Feedback_BMI_Random_Reward,
+        'Feedback_BMI_Holostim':_Feedback_BMI_Holostim,
+        'No_Reward_Pretrain':_No_Reward_Pretrain,
+        'BMI':_BMI
     }
     
     if experiment_type not in experiment_dict:
-        raise ValueError(f'Invalid experiment type: {experiment_type}. Choose from Holostim, HoloE2, HoloE3, Random_Reward')
+        raise ValueError(f'Invalid experiment type: {experiment_type}. Choose from Holostim, HoloE2, HoloE3, Random_Reward, Feedback_BMI_Random_Reward,Feedback_BMI_Holostim,No_Reward_Pretrain,BMI ')
 
     ret = collections.defaultdict(list)
     folder_raw = Path('/data/project/nvl_lab/HoloBMI/Raw')
