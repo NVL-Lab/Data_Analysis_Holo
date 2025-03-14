@@ -13,16 +13,17 @@ import pandas as pd
 import numpy as np
 
 
-def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_recording: int) -> Tuple[np.array, np.array]:
+def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_recording: int) \
+        -> Tuple[np.array, np.array, np.array]:
     """ Funtion to obtain the peaks of the voltage recording file
     :param voltage_recording: the path to the voltage recording file
-    :param frame_rate: the frame rate of the 2p recording
-    :param size_of_recording: the size of the 2p data
-    :return: the indices of the peaks of the voltage
         Input_1 = Trigger for each frame of the microscope recording
         Input_5 = Trigger for reward
         Input_6 = Trigger for a holographic stim
-        Input_7 = Trigger for each frame evaluated by the BMI"""
+        Input_7 = Trigger for each frame evaluated by the BMI
+    :param frame_rate: the frame rate of the 2p recording
+    :param size_of_recording: the size of the 2p data
+    :return: the indices of the peaks of the voltage """
 
     df_voltage = pd.read_csv(voltage_recording)
     peaks_I1, _ = find_peaks(df_voltage[' Input 1'][:int(size_of_recording / frame_rate * 1000)], height=2, distance=15)
@@ -31,8 +32,6 @@ def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_rec
     peaks_I6, _ = find_peaks(df_voltage[' Input 6'][:int(size_of_recording / frame_rate * 1000)], height=0.1,
                              distance=1000)
     peaks_I7, _ = find_peaks(df_voltage[' Input 7'][:int(size_of_recording / frame_rate * 1000)], height=2, distance=15)
-    if peaks_I6.shape[0]>0:
-        peaks_I6 = peaks_I6[1:]
 
     if peaks_I1.shape[0] != size_of_recording:
         raise ValueError(f'We found more frame triggers {peaks_I1.shape[0]} '
