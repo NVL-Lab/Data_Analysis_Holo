@@ -1,11 +1,14 @@
 
 import collections
 import os
+import re
+
 import pandas as pd
 import numpy as np
+
 from pathlib import Path
 from datetime import datetime
-import re
+
 # from data.py import _Holostim, _HoloE3, _HoloE2, _Random_Reward
 
 _Holostim = {
