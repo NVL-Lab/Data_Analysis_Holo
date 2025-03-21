@@ -141,7 +141,6 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         nwbfile_baseline = io_baseline.read()
         frame_rate = nwbfile_baseline.acquisition['TwoPhotonSeries'].rate
         size_of_recording = nwbfile_baseline.acquisition['TwoPhotonSeries'].data.shape[0]
-        somethingstupid = 0
 
 
         baseline_data = loadmat(folder_raw / row.session_path / row.baseline_mat_file)['baseActivity']
