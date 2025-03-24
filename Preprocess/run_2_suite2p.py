@@ -9,16 +9,18 @@ import numpy as np
 import scipy.io as sio
 
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
 from scipy import signal
 
+from Utils.analysis_configuration import AnalysisConfiguration as aconf
+from Utils.analysis_constants import AnalysisConstants as act
 from suite2p.run_s2p import run_s2p
 
 
 def obtain_bad_frames_from_fneu(fneu_old: np.array) -> Tuple[np.array, np.array, np.array, np.array, np.array, bool]:
     """ Function to obtain the frames of stim that need to go """
-    conv_win = np.ones(AnalysisConfiguration.filter_size)
-    window = int(AnalysisConfiguration.filter_size/2)
+    conv_win = np.ones(aconf.filter_size)
+    window = int(aconf.filter_size/2)
     aux_bad_frames = []
     st = np.zeros(fneu_old.shape[0])
     aux_fden = np.zeros(fneu_old.shape)
@@ -33,23 +35,23 @@ def obtain_bad_frames_from_fneu(fneu_old: np.array) -> Tuple[np.array, np.array,
         aux_f[window:Fconv.shape[0]+window] = Fconv
         F_denoised = fneu_old[neu,:]-aux_f
         aux_fden[neu, :] = F_denoised
-        st[neu] = ((np.percentile(F_denoised[AnalysisConfiguration.index_before_pretrain:
-                                           AnalysisConfiguration.index_after_pretrain],
-                                AnalysisConfiguration.percentil_threshold)[1]/
-                   np.nanstd(F_denoised[AnalysisConfiguration.index_before_pretrain:
-                                        AnalysisConfiguration.index_after_pretrain]))/
-                   np.nanstd(F_denoised[AnalysisConfiguration.index_after_pretrain:]))
+        st[neu] = ((np.percentile(F_denoised[aconf.index_before_pretrain:
+                                           aconf.index_after_pretrain],
+                                aconf.percentil_threshold)[1]/
+                   np.nanstd(F_denoised[aconf.index_before_pretrain:
+                                        aconf.index_after_pretrain]))/
+                   np.nanstd(F_denoised[aconf.index_after_pretrain:]))
     top_index = np.argsort(st)[::-1]
     Fmean = np.nanmean(aux_fden[top_index[:10],:],0)
-    Fmean[Fmean< AnalysisConfiguration.height_stim_artifact * np.nanstd(Fmean[AnalysisConfiguration.index_before_pretrain:
-                                                                              AnalysisConfiguration.index_after_pretrain])] = 0
+    Fmean[Fmean< aconf.height_stim_artifact * np.nanstd(Fmean[aconf.index_before_pretrain:
+                                                              aconf.index_after_pretrain])] = 0
     bad_frames_index = np.where(Fmean > 0)[0]
     bad_frames_index.sort()
     frames_include = np.setdiff1d(np.arange(fneu_old.shape[1]), bad_frames_index)
     bad_frames_bool = np.zeros(fneu_old.shape[1], dtype=bool)
     bad_frames_bool[bad_frames_index] = 1
     stim_index, stim_time_bool = obtain_stim_time(bad_frames_bool)
-    if np.sum(stim_index<AnalysisConstants.calibration_frames) > 0:
+    if np.sum(stim_index<act.calibration_frames) > 0:
         sanity_check = True
     else:
         sanity_check = False
@@ -62,11 +64,11 @@ def refine_classifier(folder_suite2p: Path, dn_bool: bool = True):
     is_cell = np.load(Path(folder_suite2p) / "iscell.npy")
     is_cell_new = copy.deepcopy(is_cell)
     snr_val = snr_neuron(folder_suite2p)
-    stable_neuron = stability_neuron(folder_suite2p, init=AnalysisConstants.calibration_frames)
+    stable_neuron = stability_neuron(folder_suite2p, init=act.calibration_frames)
     for nn, neuron in enumerate(neurons):
         if neuron['skew'] > 10 or neuron['skew'] < 0.4 or neuron['compact'] > 1.4 or \
                 neuron['footprint'] == 0 or neuron['footprint'] == 3 or neuron['npix'] < 80 or \
-                snr_val[nn] < AnalysisConfiguration.snr_min or ~stable_neuron[nn]:
+                snr_val[nn] < aconf.snr_min or ~stable_neuron[nn]:
             is_cell_new[nn, :] = [0, 0]
     if dn_bool:
         aux_dn = np.load(Path(folder_suite2p) / "direct_neurons.npy", allow_pickle=True)
@@ -127,23 +129,3 @@ def stability_neuron(folder_suite2p: Path, init: int = 0, end: Optional[int] = N
     return arr_stab
 
 
-@dataclass
-class AnalysisConfiguration:
-    """
-    Class containing various configuration parameters for analysis. Reasonable defaults are
-    provided.
-    """
-
-    # dirs
-    local_dir = Path("C:/Users/nuria/DATA/Analysis/")  # None
-    experiment_dir = Path("F:/data")
-
-    # pre-process
-    filter_size: int = 500  # in frames
-    height_stim_artifact = 10
-    calibration_frames: int = 27000  # in frames
-    seq_holo_frames: int = 2700  # in frames
-    pretrain_frames: int = 75600 # in frames
-    percentil_threshold: float = [0.1, 99.9]
-    index_before_pretrain = seq_holo_frames + calibration_frames
-    index_after_pretrain = seq_holo_frames + calibration_frames + pretrain_frames

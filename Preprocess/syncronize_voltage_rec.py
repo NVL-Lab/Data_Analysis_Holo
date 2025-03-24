@@ -14,7 +14,7 @@ import numpy as np
 
 
 def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_recording: int) \
-        -> Tuple[np.array, np.array, np.array]:
+        -> Tuple[np.array, np.array, np.array, np.array]:
     """ Funtion to obtain the peaks of the voltage recording file
     :param voltage_recording: the path to the voltage recording file
         Input_1 = Trigger for each frame of the microscope recording
@@ -33,10 +33,6 @@ def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_rec
                              distance=1000)
     peaks_I7, _ = find_peaks(df_voltage[' Input 7'][:int(size_of_recording / frame_rate * 1000)], height=2, distance=15)
 
-    if peaks_I1.shape[0] != size_of_recording:
-        raise ValueError(f'We found more frame triggers {peaks_I1.shape[0]} '
-                         f'than the size of the recording {size_of_recording}')
-
     indices_for_5 = np.searchsorted(peaks_I1, peaks_I5) - 1
     indices_for_5 = np.maximum(indices_for_5, 0).astype('int')
     indices_for_6 = np.searchsorted(peaks_I1, peaks_I6) - 1
@@ -44,5 +40,5 @@ def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_rec
     indices_for_7 = np.searchsorted(peaks_I1, peaks_I7) - 1
     indices_for_7 = np.maximum(indices_for_7, 0).astype('int')
 
-    return indices_for_5, indices_for_6, indices_for_7
+    return peaks_I1, indices_for_5, indices_for_6, indices_for_7
 
