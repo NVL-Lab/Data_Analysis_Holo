@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 
 
-def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_recording: int) \
+def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_recording: int, limit_size: bool = False) \
         -> Tuple[np.array, np.array, np.array, np.array]:
     """ Funtion to obtain the peaks of the voltage recording file
     :param voltage_recording: the path to the voltage recording file
@@ -26,12 +26,20 @@ def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_rec
     :return: the indices of the peaks of the voltage """
 
     df_voltage = pd.read_csv(voltage_recording)
-    peaks_I1, _ = find_peaks(df_voltage[' Input 1'][:int(size_of_recording / frame_rate * 1000)], height=2, distance=15)
-    peaks_I5, _ = find_peaks(df_voltage[' Input 5'][:int(size_of_recording / frame_rate * 1000)], height=3,
+    peaks_I1, _ = find_peaks(df_voltage[' Input 1'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05,
+                             distance=15)
+    peaks_I5, _ = find_peaks(df_voltage[' Input 5'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05,
                              distance=1000)
-    peaks_I6, _ = find_peaks(df_voltage[' Input 6'][:int(size_of_recording / frame_rate * 1000)], height=0.1,
-                             distance=1000)
-    peaks_I7, _ = find_peaks(df_voltage[' Input 7'][:int(size_of_recording / frame_rate * 1000)], height=2, distance=15)
+    if not limit_size:
+        peaks_I6, _ = find_peaks(df_voltage[' Input 6'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05,
+                                 distance=1000)
+        peaks_I7, _ = find_peaks(df_voltage[' Input 7'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05,
+                                 distance=15, width=(0, 45))
+    else:
+        peaks_I6, _ = find_peaks(df_voltage[' Input 6'][:peaks_I5[-1]], prominence=0.05,
+                                 distance=1000)
+        peaks_I7, _ = find_peaks(df_voltage[' Input 7'][:peaks_I5[-1]], prominence=0.05,
+                                 distance=15, width=(0, 45))
 
     indices_for_5 = np.searchsorted(peaks_I1, peaks_I5) - 1
     indices_for_5 = np.maximum(indices_for_5, 0).astype('int')
