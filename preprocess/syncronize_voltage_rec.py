@@ -1,4 +1,5 @@
 __author__ = 'Nuria'
+
 # __author__ = ("Nuria", "John Doe")
 
 # make sure to be in environment with pynwb
@@ -14,7 +15,7 @@ import numpy as np
 
 
 def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_recording: int, limit_size: bool = False) \
-        -> Tuple[np.array, np.array, np.array, np.array]:
+        -> Tuple[np.array, np.array, np.array, np.array, list]:
     """ Funtion to obtain the peaks of the voltage recording file
     :param voltage_recording: the path to the voltage recording file
         Input_1 = Trigger for each frame of the microscope recording
@@ -28,8 +29,17 @@ def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_rec
     :return: the indices of the peaks of the voltage """
 
     df_voltage = pd.read_csv(voltage_recording)
+    comments = []
     peaks_I1, _ = find_peaks(df_voltage[' Input 1'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05,
                              distance=15)
+    if peaks_I1.shape[0] > size_of_recording:
+        comments.append(f'We found more frame triggers {peaks_I1.shape[0]} '
+                        f'than the size of the recording {size_of_recording}')
+        peaks_I1 = peaks_I1[:size_of_recording]
+        raise Warning(comments)
+    else:
+        comments.append(f'Triggers for image frames: {peaks_I1.shape[0]} found successfully ')
+
     peaks_I5, _ = find_peaks(df_voltage[' Input 5'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05,
                              distance=1000)
     if not limit_size:
@@ -50,5 +60,4 @@ def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_rec
     indices_for_7 = np.searchsorted(peaks_I1, peaks_I7) - 1
     indices_for_7 = np.maximum(indices_for_7, 0).astype('int')
 
-    return peaks_I1, indices_for_5, indices_for_6, indices_for_7
-
+    return peaks_I1, indices_for_5, indices_for_6, indices_for_7, comments
