@@ -124,6 +124,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             timestamps=indices_for_6.astype('float64'),
             comments=comments_holoseries
         )
+        #this is a stupid change
         nwbfile_holographic_seq.add_stimulus(ogen_seq_series)
 
         # write and close the nwb file
