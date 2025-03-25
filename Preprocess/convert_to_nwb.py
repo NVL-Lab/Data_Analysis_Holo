@@ -1,4 +1,5 @@
 __author__ = 'Nuria'
+
 # __author__ = ("Nuria", "John Doe")
 
 # make sure to be in environment with pynwb and neuroconv installed
@@ -15,13 +16,14 @@ from neuroconv.converters import BrukerTiffSinglePlaneConverter
 
 from Preprocess import dataframe_sessions as ds
 from Preprocess import syncronize_voltage_rec as svr
-from Utils import analysis_constants as ac
+from Utils import analysis_constants as act
+
 
 # you need to install neuroconv converter first. In this case we use:
 # https://neuroconv.readthedocs.io/en/main/conversion_examples_gallery/imaging/brukertiff.html
 
 
-def convert_bruker_images_to_nwb(folder_path: Path, nwbfile_path:str):
+def convert_bruker_images_to_nwb(folder_path: Path, nwbfile_path: str):
     """ function to convert a bruker tiff file recording to nwb
     :param folder_path: path to the folder containing the tiff files
     :param nwbfile_path: path where we want to store the nwb file"""
@@ -30,8 +32,10 @@ def convert_bruker_images_to_nwb(folder_path: Path, nwbfile_path:str):
     metadata = converter.get_metadata()
     session_start_time = metadata["NWBFile"]["session_start_time"]
     tzinfo = ZoneInfo("US/Eastern")
-    metadata["NWBFile"].update(session_start_time=session_start_time.replace(tzinfo=tzinfo)) # TODO this doesn't seem to work properly
+    metadata["NWBFile"].update(
+        session_start_time=session_start_time.replace(tzinfo=tzinfo))  # TODO this doesn't seem to work properly
     converter.run_conversion(nwbfile_path=nwbfile_path, metadata=metadata)
+
 
 def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
     """ function to convert all experiments within a experiment type to nwb"""
@@ -56,6 +60,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         nwbfile_holographic_seq = io_holographic_seq.read()
         frame_rate = nwbfile_holographic_seq.acquisition['TwoPhotonSeries'].rate
         size_of_recording = nwbfile_holographic_seq.acquisition['TwoPhotonSeries'].data.shape[0]
+        comments_holo = []
 
         # create the device for holographic stim
         holographic_device = nwbfile_holographic_seq.create_device(
@@ -64,25 +69,26 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             manufacturer="Coherent",
         )
         # Save the neural data that was store in the mat file
-        holostim_seq_data = loadmat(folder_raw / row.session_path / row.holostim_seq_mat_file) ['holoActivity']
+        holostim_seq_data = loadmat(folder_raw / row.session_path / row.holostim_seq_mat_file)['holoActivity']
         # select holodata that is not nan and transpose to have time x neurons
-        holostim_seq_data = holostim_seq_data[:, ~np.isnan(np.sum(holostim_seq_data,0))].T
+        holostim_seq_data = holostim_seq_data[:, ~np.isnan(np.sum(holostim_seq_data, 0))].T
         voltage_recording = folder_holobmi_seq_im / row.Holostim_seq_im_voltage_file
-        peaks_I1, _, indices_for_6, indices_for_7 = svr.obtain_peaks_voltage(voltage_recording, frame_rate, size_of_recording)
+        peaks_I1, _, indices_for_6, indices_for_7 = svr.obtain_peaks_voltage(voltage_recording, frame_rate,
+                                                                             size_of_recording)
         if peaks_I1.shape[0] != size_of_recording:
-            comments_holo = (f'We found more frame triggers {peaks_I1.shape[0]} '
-                             f'than the size of the recording {size_of_recording}')
+            comments_holo.append(f'We found more frame triggers {peaks_I1.shape[0]} '
+                                 f'than the size of the recording {size_of_recording}')
             raise Warning(comments_holo)
         if indices_for_7.shape[0] < holostim_seq_data.shape[0]:
             holostim_seq_data = holostim_seq_data[:indices_for_7.shape[0], :]
-            comments_holo = 'Holostim_seq data has more items than triggers were obtained from the voltage file'
+            comments_holo.append('Holostim_seq data has more items than triggers were obtained from the voltage file')
             raise Warning(comments_holo)
         elif indices_for_7.shape[0] > holostim_seq_data.shape[0]:
             indices_for_7 = indices_for_7[:holostim_seq_data.shape[0]]
-            comments_holo ='Holostim_seq data has less items than triggers were obtained from the voltage file'
+            comments_holo.append('Holostim_seq data has less items than triggers were obtained from the voltage file')
             raise Warning(comments_holo)
         else:
-            comments_holo = 'conversion worked correctly'
+            comments_holo.append('conversion worked correctly')
 
         online_neural_data = TimeSeries(
             name="online_neural_activity",
@@ -151,7 +157,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         baseline_data = baseline_data[:, ~np.isnan(np.sum(baseline_data, 0))].T
         voltage_recording = folder_baseline_im / row.baseline_im_voltage_file
         peaks_I1, _, _, indices_for_7 = svr.obtain_peaks_voltage(voltage_recording, frame_rate,
-                                                                   size_of_recording)
+                                                                 size_of_recording)
         if indices_for_7.shape[0] != baseline_data.shape[0]:
             raise ValueError(f' The number of Triggers {indices_for_7.shape[0]} '
                              f'does not match the data {baseline_data.shape[0]}')
@@ -180,6 +186,8 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         frame_rate = nwbfile_pretrain.acquisition['TwoPhotonSeries'].rate
         size_of_recording = nwbfile_pretrain.acquisition['TwoPhotonSeries'].data.shape[0]
 
-
-
-
+        pretrain_data = loadmat(folder_raw / row.session_path / row.pretrain_mat_file)['data']['bmiAct'][0][0]
+        pretrain_data = pretrain_data[:, :np.where(~np.isnan(pretrain_data).all(axis=0))[0][-1]].T
+        voltage_recording = folder_pretrain_im / row.pretrain_im_voltage_file
+        peaks_I1, indices_for_5, indices_for_6, indices_for_7 = svr.obtain_peaks_voltage(voltage_recording, frame_rate,
+                                                                                         size_of_recording)
