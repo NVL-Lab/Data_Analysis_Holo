@@ -23,6 +23,8 @@ def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_rec
         Input_7 = Trigger for each frame evaluated by the BMI
     :param frame_rate: the frame rate of the 2p recording
     :param size_of_recording: the size of the 2p data
+    :param limit_size: whether to limit the size of the voltage recording to the last reward trigger
+    which seems to be 100% reliable across all experiments that has it.
     :return: the indices of the peaks of the voltage """
 
     df_voltage = pd.read_csv(voltage_recording)
