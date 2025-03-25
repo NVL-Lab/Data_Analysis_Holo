@@ -14,9 +14,9 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 from neuroconv.converters import BrukerTiffSinglePlaneConverter
 
-from Preprocess import dataframe_sessions as ds
-from Preprocess import syncronize_voltage_rec as svr
-from Utils import analysis_constants as act
+from preprocess import dataframe_sessions as ds
+from preprocess import syncronize_voltage_rec as svr
+from utils import analysis_constants as act
 
 
 # you need to install neuroconv converter first. In this case we use:
