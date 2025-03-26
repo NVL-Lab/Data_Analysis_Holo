@@ -72,8 +72,9 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         # select holodata that is not nan and transpose to have time x neurons
         holostim_seq_data = holostim_seq_data[:, ~np.isnan(np.sum(holostim_seq_data, 0))].T
         voltage_recording = folder_holobmi_seq_im / row.Holostim_seq_im_voltage_file
-        peaks_I1, _, indices_for_6, indices_for_7, comments_holo = svr.obtain_peaks_voltage(voltage_recording, frame_rate,
-                                                                             size_of_recording)
+        peaks_I1, _, indices_for_6, indices_for_7, comments_holo = svr.obtain_peaks_voltage(voltage_recording,
+                                                                                            frame_rate,
+                                                                                            size_of_recording)
         if indices_for_7.shape[0] < holostim_seq_data.shape[0]:
             holostim_seq_data = holostim_seq_data[:indices_for_7.shape[0], :]
             comments_holo.append('Holostim_seq data has more items than triggers were obtained from the voltage file')
@@ -152,15 +153,17 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         baseline_data = baseline_data[:, ~np.isnan(np.sum(baseline_data, 0))].T
         voltage_recording = folder_baseline_im / row.baseline_im_voltage_file
         peaks_I1, _, _, indices_for_7, comments_baseline = svr.obtain_peaks_voltage(voltage_recording, frame_rate,
-                                                                 size_of_recording)
+                                                                                    size_of_recording)
         if indices_for_7.shape[0] < baseline_data.shape[0]:
             baseline_data = baseline_data[:indices_for_7.shape[0], :]
-            comments_baseline.append('Holostim_seq data has more items than triggers were obtained from the voltage file')
-            raise Warning(comments_holo)
+            comments_baseline.append(
+                'Baseline data has more items than triggers were obtained from the voltage file')
+            raise Warning(comments_baseline)
         elif indices_for_7.shape[0] > baseline_data.shape[0]:
             indices_for_7 = indices_for_7[:baseline_data.shape[0]]
-            comments_baseline.append('Holostim_seq data has less items than triggers were obtained from the voltage file')
-            raise Warning(comments_holo)
+            comments_baseline.append(
+                'Baseline data has less items than triggers were obtained from the voltage file')
+            raise Warning(comments_baseline)
         else:
             comments_baseline.append('conversion worked correctly')
 
@@ -191,5 +194,31 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         pretrain_data = loadmat(folder_raw / row.session_path / row.pretrain_mat_file)['data']['bmiAct'][0][0]
         pretrain_data = pretrain_data[:, :np.where(~np.isnan(pretrain_data).all(axis=0))[0][-1]].T
         voltage_recording = folder_pretrain_im / row.pretrain_im_voltage_file
-        peaks_I1, indices_for_5, indices_for_6, indices_for_7 = svr.obtain_peaks_voltage(voltage_recording, frame_rate,
-                                                                                         size_of_recording)
+        peaks_I1, indices_for_5, indices_for_6, indices_for_7, comments_pretrain = (
+            svr.obtain_peaks_voltage(voltage_recording, frame_rate, size_of_recording))
+
+        if indices_for_7.shape[0] < pretrain_data.shape[0]:
+            pretrain_data = pretrain_data[:indices_for_7.shape[0], :]
+            comments_pretrain.append(
+                'Pretrain data has more items than triggers were obtained from the voltage file')
+            raise Warning(comments_pretrain)
+        elif indices_for_7.shape[0] > pretrain_data.shape[0]:
+            indices_for_7 = indices_for_7[:pretrain_data.shape[0]]
+            comments_pretrain.append(
+                'Pretrain data has less items than triggers were obtained from the voltage file')
+            raise Warning(comments_pretrain)
+        else:
+            comments_pretrain.append('conversion worked correctly')
+
+        online_neural_data = TimeSeries(
+            name="online_neural_activity",
+            description=(f'neural data obtained online from {pretrain_data.shape[1]} neurons while'
+                         f' performing the pretrain of the BMI'),
+            data=pretrain_data,
+            timestamps=indices_for_7.astype('float64'),
+            unit="imaging frames",
+        )
+        nwbfile_pretrain.add_acquisition(online_neural_data)
+
+        io_pretrain.write(nwbfile_pretrain)
+        io_pretrain.close()
