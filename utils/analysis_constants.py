@@ -34,5 +34,5 @@ class AnalysisConstants:
     # stim removal
 
 
-    # temp_change_lowcaps_preprocess
+    # preprocess
     mice = ['NVI12', 'NVI13', 'NVI16', 'NVI17', 'NVI20', 'NVI21', 'NVI22']

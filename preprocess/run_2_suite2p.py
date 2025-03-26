@@ -12,8 +12,8 @@ from pathlib import Path
 from typing import Tuple, Optional
 from scipy import signal
 
-from temp_change_lowcaps_utils.analysis_configuration import AnalysisConfiguration as aconf
-from temp_change_lowcaps_utils.analysis_constants import AnalysisConstants as act
+from utils.analysis_configuration import AnalysisConfiguration as aconf
+from utils.analysis_constants import AnalysisConstants as act
 from suite2p.run_s2p import run_s2p
 
 
