@@ -85,22 +85,40 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             description = "description",
             emission_lambda = 500.0
         )
-        # The imaging plane is defined, placeholders for data ###TO DO
+        # The imaging plane is defined, placeholders for most data ###TO DO
         imaging_plane = nwbfile_holographic_seq.create_imaging_plane(
-            name = "ImagingPlane",
+            name = "name",
             optical_channel = optical_channel,
             imaging_rate = frame_rate,
-            description = "a very interesting part of the brain",
+            description = "description",
             device = holographic_device,
             excitation_lambda = 1035.,
-            indicator = "GFP",
-            location = "V1",
+            indicator = "indicator",
+            location = "location",
             grid_spacing = [0.01, 0.01],
-            grid_spacing_unit = "meters",
+            grid_spacing_unit = "unit",
             origin_coords = [1.0, 2.0, 3.0],
-            origin_coords_unit = "meters",
+            origin_coords_unit = "unit",
         )
- 
+        #finally, ROIs are defined
+        n_rois = 2
+        plane_segmentation = PlaneSegmentation(
+            name="PlaneSegmentation",
+            description="output from segmenting my favorite imaging plane",
+            imaging_plane=imaging_plane,
+        )
+        for _ in range(n_rois):
+            plane_segmentation.add_roi(image_mask=np.zeros((10, 10)))
+
+        if nwbfile_holographic_seq is not None:
+            if "ophys" not in nwbfile_holographic_seq.processing:
+                nwbfile_holographic_seq.create_processing_module("ophys", "ophys")
+            nwbfile_holographic_seq.processing["ophys"].add(plane_segmentation)
+
+        roi_table_region = plane_segmentation.create_roi_table_region(
+            region=[0, 1], description="the first of two ROIs"
+        )
+        
         # Save the neural data that was store in the mat file
         holostim_seq_data = loadmat(folder_raw / row.session_path / row.holostim_seq_mat_file)['holoActivity']
         # select holodata that is not nan and transpose to have time x neurons
@@ -147,24 +165,29 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         else:
             comments_holoseries = 'All points were stimulated sequentially'
 
-        ogen_stim_seq_site = ogen.OptogeneticStimulusSite(
+        holo_stim_seq_site = PatternedOptogeneticStimulusSite(
             name="Holographic sequential location",
             device=holographic_device,
             description="Sequential stimulation of all the neurons selected as initial ROIs",
             excitation_lambda=1035.,  # nm
+            effector = "placeholder", #todo
             location="all initial ROIs",
         )
-        nwbfile_holographic_seq.add_ogen_site(ogen_stim_seq_site)
+        nwbfile_holographic_seq.add_ogen_site(holo_stim_seq_site)
 
-        ogen_seq_series = ogen.OptogeneticSeries(
-            name="Holographic sequential",
-            data=list(zip(index, point, power)),
-            description="Tuple with information about the index of stim, the neuron stimulated and the power",
-            site=ogen_stim_seq_site,
-            timestamps=indices_for_6.astype('float64'),
-            comments=comments_holoseries
+        holo_seq_series = PatternedOptogeneticSeries(
+            name = "Holographic sequential",
+            description = "Tuple with information about the index of stim, the neuron stimulated and the power",
+            data = list(zip(index, point, power)),
+            unit = "placeholder", #watts? todo
+            timestamps = indices_for_6.astype('float64'),
+            rois = roi_table_region,
+            stimulus_pattern = "pattern", #todo, many possible patterns exist
+            site = holo_stim_seq_site,
+            light_source = "light_source", #todo    
+            spatial_light_modulator = "modulator" #todo
         )
-        nwbfile_holographic_seq.add_stimulus(ogen_seq_series)
+        nwbfile_holographic_seq.add_stimulus(holo_seq_series)
 
         # write and close the nwb file
         io_holographic_seq.write(nwbfile_holographic_seq)
