@@ -9,7 +9,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 
 from scipy.io import loadmat
-from pynwb import NWBHDF5IO, TimeSeries, ogen
+from pynwb import NWBFile, NWBHDF5IO, TimeSeries, ogen
 from pathlib import Path
 from zoneinfo import ZoneInfo
 from neuroconv.converters import BrukerTiffSinglePlaneConverter
@@ -17,6 +17,18 @@ from neuroconv.converters import BrukerTiffSinglePlaneConverter
 from preprocess import dataframe_sessions as ds
 from preprocess import syncronize_voltage_rec as svr
 from utils import analysis_constants as act
+
+from pynwb.ophys import PlaneSegmentation, ImageSegmentation, OpticalChannel
+from ndx_holographic_stimulation import (
+    PatternedOptogeneticSeries,
+    PatternedOptogeneticStimulusSite,
+    OptogeneticStimulusPattern,
+    SpiralScanning,
+    TemporalFocusing,
+    SpatialLightModulator,
+    LightSource,
+)
+
 
 
 # you need to install neuroconv converter first. In this case we use:
@@ -67,6 +79,28 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             description="Laser used for the holographic stim",
             manufacturer="Coherent",
         )
+        # The optical channel is defined, placeholders for data ###TO DO
+        optical_channel = OpticalChannel(
+            name = "name",
+            description = "description",
+            emission_lambda = 500.0
+        )
+        # The imaging plane is defined, placeholders for data ###TO DO
+        imaging_plane = nwbfile_holographic_seq.create_imaging_plane(
+            name = "ImagingPlane",
+            optical_channel = optical_channel,
+            imaging_rate = frame_rate,
+            description = "a very interesting part of the brain",
+            device = holographic_device,
+            excitation_lambda = 1035.,
+            indicator = "GFP",
+            location = "V1",
+            grid_spacing = [0.01, 0.01],
+            grid_spacing_unit = "meters",
+            origin_coords = [1.0, 2.0, 3.0],
+            origin_coords_unit = "meters",
+        )
+ 
         # Save the neural data that was store in the mat file
         holostim_seq_data = loadmat(folder_raw / row.session_path / row.holostim_seq_mat_file)['holoActivity']
         # select holodata that is not nan and transpose to have time x neurons
