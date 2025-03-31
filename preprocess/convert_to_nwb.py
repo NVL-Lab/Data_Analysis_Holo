@@ -81,9 +81,9 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         )
         # The optical channel is defined, placeholders for data ###TO DO
         optical_channel = OpticalChannel(
-            name = "name",
-            description = "description",
-            emission_lambda = 500.0
+            name = "channel_1",
+            description = "Channel used for red expression",
+            emission_lambda = 920.0
         )
         # The imaging plane is defined, placeholders for most data ###TO DO
         imaging_plane = nwbfile_holographic_seq.create_imaging_plane(
@@ -118,7 +118,41 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         roi_table_region = plane_segmentation.create_roi_table_region(
             region=[0, 1], description="the first of two ROIs"
         )
-        
+
+        #defining light modulator and light source
+
+        spatial_light_modulator = SpatialLightModulator(
+            name="slm_name",
+            description="slm_description",
+            model="slm_model",
+            resolution="slm_resolution",
+        )
+        nwbfile_holographic_seq.add_device(spatial_light_modulator)
+
+        light_source = LightSource(
+            name="light source name",
+            stimulation_wavelength="stimulation wavelength",  # nm
+            description="light source description",
+            filter_description="filter description",
+            peak_power="power",
+            intensity="intensity",
+            exposure_time="exposure time",
+            pulse_rate="pulse_rate",
+        )
+        nwbfile_holographic_seq.add_device(light_source)
+
+        #defining a generic stimulation pattern
+
+        generic_pattern = OptogeneticStimulusPattern(
+            name="generic pattern",
+            description="pattern description",
+            duration="duration",
+            number_of_stimulus_presentation= "number",
+            inter_stimulus_interval= "inter stimulus interval",
+        )
+        nwbfile_holographic_seq.add_lab_meta_data(generic_pattern)
+
+
         # Save the neural data that was store in the mat file
         holostim_seq_data = loadmat(folder_raw / row.session_path / row.holostim_seq_mat_file)['holoActivity']
         # select holodata that is not nan and transpose to have time x neurons
@@ -165,6 +199,8 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         else:
             comments_holoseries = 'All points were stimulated sequentially'
 
+        #site and series adapted to the nwb holo extension
+
         holo_stim_seq_site = PatternedOptogeneticStimulusSite(
             name="Holographic sequential location",
             device=holographic_device,
@@ -182,10 +218,10 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             unit = "placeholder", #watts? todo
             timestamps = indices_for_6.astype('float64'),
             rois = roi_table_region,
-            stimulus_pattern = "pattern", #todo, many possible patterns exist
+            stimulus_pattern = generic_pattern, #todo, many possible patterns exist
             site = holo_stim_seq_site,
-            light_source = "light_source", #todo    
-            spatial_light_modulator = "modulator" #todo
+            light_source = light_source,    
+            spatial_light_modulator = spatial_light_modulator
         )
         nwbfile_holographic_seq.add_stimulus(holo_seq_series)
 
