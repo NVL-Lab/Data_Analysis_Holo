@@ -75,7 +75,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
 
         # create the device for holographic stim
         holographic_device = nwbfile_holographic_seq.create_device(
-            name='Monaco',
+            name="Monaco",
             description="Laser used for the holographic stim",
             manufacturer="Coherent",
         )
@@ -95,20 +95,22 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             excitation_lambda = 1035.,
             indicator = "indicator",
             location = "location",
-            grid_spacing = [0.01, 0.01],
-            grid_spacing_unit = "unit",
-            origin_coords = [1.0, 2.0, 3.0],
-            origin_coords_unit = "unit",
+
+            # in the code they offer the possibility to save if the stimulation happened in a regular pattern with the following lines. 
+            #grid_spacing = [0.01, 0.01],
+            #grid_spacing_unit = "unit",
+            #origin_coords = [1.0, 2.0, 3.0],
+            #origin_coords_unit = "unit",
         )
         #finally, ROIs are defined
         n_rois = 2
         plane_segmentation = PlaneSegmentation(
             name="PlaneSegmentation",
-            description="output from segmenting my favorite imaging plane",
+            description="description",
             imaging_plane=imaging_plane,
         )
         for _ in range(n_rois):
-            plane_segmentation.add_roi(image_mask=np.zeros((10, 10)))
+            plane_segmentation.add_roi(image_mask=np.zeros((10, 10))) # image mask is a placeholder for real data
 
         if nwbfile_holographic_seq is not None:
             if "ophys" not in nwbfile_holographic_seq.processing:
@@ -116,7 +118,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             nwbfile_holographic_seq.processing["ophys"].add(plane_segmentation)
 
         roi_table_region = plane_segmentation.create_roi_table_region(
-            region=[0, 1], description="the first of two ROIs"
+            region=[0, 1], description="the first of two ROIs" # I don't think this line is necessary
         )
 
         #defining light modulator and light source
