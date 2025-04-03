@@ -13,9 +13,16 @@ from utils.get_data import get_data_df, get_data_rec
 if __name__ == '__main__':
     args = sys.argv[1:]
     to_plot = False
+    to_csv = True
+    read_df = False
 
     # FUNCTION
-    info = get_data_df(args[0])
+    if read_df:
+        # ~/project/nvl_lab/holo_bmi/Data_Analysis_Holo/wholescale_analysis/files/holobmi_df.parquet
+        info = get_data_df(args[0])
+    else:
+        # /data/project/nvl_lab/HoloBMI/Raw/
+        info = get_data_rec(args[0])
 
     if not info:
         print('Data was filtered out')
@@ -28,14 +35,19 @@ if __name__ == '__main__':
         'Min_Diff': [], 
         'Sugg_Input': [], 
         'Voltage_File': [], 
-        'Experiment': []
+        'Experiment': [],
+        'Limit_Size': [],
+        'Prev_Min_Diff': []
         }
 
     for expt in info:
+        # Lack of input 0?
+        if expt == '191106_NVI20_D02':
+            continue
         for test in info[expt]:
             limit_size = False
             #triggs = np.array([])
-            print(f'Processing {test}...')
+            print(f'Processing {expt}:{test}...')
             if test == 'mats':
                 holo_data = loadmat(info[expt][test][0])
                 base_data = loadmat(info[expt][test][1])
@@ -46,19 +58,21 @@ if __name__ == '__main__':
             trigg_peaks = list(peak_info[1:9])
             triggs = [len(peaks) for peaks in trigg_peaks]
             input_data = get_vars(test, np.array(triggs), expt, peak_info[0], info, holo_data, base_data, pre_var_data, bmi_var_data, input_data_temp, limit_size)
-            if input_data == 'limit size':
+            if isinstance(input_data, tuple):
+                prev_bmi_diff = input_data[0]
+                prev_holo_diff = input_data[1]
                 input_data = input_data_temp 
                 limit_size = True
                 print('Limiting size of Input 7...')
                 peak_info = get_voltages(info[expt][test][1], 29.988635806461144, info[expt][test][0], limit_size)
                 trigg_peaks = list(peak_info[1:9])
                 triggs = [len(peaks) for peaks in trigg_peaks]
-                input_data = get_vars(test, np.array(triggs), expt, peak_info[0], info, holo_data, base_data, pre_var_data, bmi_var_data, input_data_temp, limit_size)
+                input_data = get_vars(test, np.array(triggs), expt, peak_info[0], info, holo_data, base_data, pre_var_data, bmi_var_data, input_data_temp, limit_size, prev_bmi_diff, prev_holo_diff)
             print(triggs)
 
     input_data = pd.DataFrame(input_data)
-    pd.set_option('display.max_rows', None)  # Show all rows
-    pd.set_option('display.max_columns', None)
+    #pd.set_option('display.max_rows', None)  # Show all rows
+    #pd.set_option('display.max_columns', None)
     print(input_data)
     var_pcts = input_data.groupby('Variable')['Sugg_Input'].value_counts(normalize=True)
     print(var_pcts)
@@ -66,7 +80,8 @@ if __name__ == '__main__':
     var_pcts = input_data.groupby('Variable')['Min_Diff'].value_counts(normalize=True)
     print(var_pcts)
 
-    #input_data.to_csv('results/Suggested_Inputs.csv', index=False)
+    if to_csv:
+        input_data.to_csv('results/Suggested_Inputs.csv', index=False)
     
     '''
     if q1 == 'n':

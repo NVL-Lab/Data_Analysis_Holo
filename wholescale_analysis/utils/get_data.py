@@ -17,12 +17,12 @@ def get_data_df(df_dir) -> dict:
     raw_data_dir = '/data/project/nvl_lab/HoloBMI/Raw/'
     df_path = Path(df_dir)
     df_data = pd.read_parquet(df_path)
-    '''
     df_flagged = df_data.filter(like='Flag')
     dates_flagged = df_flagged.stack().dropna().unique().tolist()
     df_data_filtered = df_data[~df_data['session_path'].isin(dates_flagged)]
     '''
     df_data_filtered = df_data 
+    '''
     df_data_filtered = df_data_filtered.dropna(subset=['session_path']) # dropna for an empty row - Rishitesh will fix
     df_data_filtered = df_data_filtered.sort_values(by='session_path', ascending=True)
     df_data_filtered = df_data_filtered.reset_index(drop=True)
@@ -69,8 +69,8 @@ def get_data_df(df_dir) -> dict:
         im_dirs = [df_data_filtered.loc[session, 'Holostim_seq_im'], df_data_filtered.loc[session, 'Baseline_im'], df_data_filtered.loc[session, 'Pretrain_im'], df_data_filtered.loc[session, 'BMI_im']]
         volt_files = [df_data_filtered.loc[session, 'Holostim_seq_im_voltage_file'], df_data_filtered.loc[session, 'Baseline_im_voltage_file'], df_data_filtered.loc[session, 'Pretrain_im_voltage_file'], df_data_filtered.loc[session, 'BMI_im_voltage_file']]
         for i in range(len(im_dirs)):
-            #print(session)
-            #print(im_dirs[i])
+            print(session)
+            print(im_dirs[i])
             exp = im_dirs[i].split('/')[0]
             im_path = exp_im_path / im_dirs[i]
             tif_count = len(list(im_path.glob(f'{exp}*.tif')))
@@ -95,7 +95,7 @@ def get_data_rec(raw_data_dir) -> dict:
     im_path =  data_path / 'im'
     
     # 'bad' datasets
-    rish_df = pd.read_csv('/home/sgurgua4/project/nvl_lab/holo_bmi/voltage_analysis/files/df_holobmi.csv') #holobmi_experiments.csv is another one
+    rish_df = pd.read_csv('/home/sgurgua4/project/nvl_lab/holo_bmi/Data_Analysis_Holo/wholescale_analysis/files/df_holobmi.csv') #holobmi_experiments.csv is another one
      #rish_df['session_path'][rish_df['Flag_BMI'].notna()]
     flag_bmi = list(rish_df[rish_df['Flag_BMI'].notna()]['session_path'])
     flag_bl = list(rish_df[rish_df['flag_baseline_im'].notna()]['session_path'])

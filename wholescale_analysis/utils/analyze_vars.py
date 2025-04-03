@@ -8,7 +8,7 @@ import numpy as np
 import math
 
 def get_voltages(voltage_recording: Path, frame_rate: float, size_of_recording: int, limit_size: bool = False) \
-                -> Tuple[np.array, np.array, np.array, np.array, list]:
+                -> Tuple[list, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, list]:
     """ 
         Funtion to obtain the peaks of the voltage recording file
             :param voltage_recording: the path to the voltage recording file
@@ -34,7 +34,8 @@ def get_voltages(voltage_recording: Path, frame_rate: float, size_of_recording: 
         comments.append(f'We found more frame triggers {peaks_I1.shape[0]} '
                         f'than the size of the recording {size_of_recording}')
         peaks_I1 = peaks_I1[:size_of_recording]
-        raise Warning(comments)
+        print(comments)
+        #raise Warning(comments)
     else:
         comments.append(f'Triggers for image frames: {peaks_I1.shape[0]} found successfully ')
 
@@ -111,7 +112,7 @@ def get_voltages(voltage_recording: Path, frame_rate: float, size_of_recording: 
     
 '''
 
-def get_vars(test, triggs, expt, volt_keys, info, holo_data, base_data, pre_var_data, bmi_var_data, input_data, limit_size) -> dict:
+def get_vars(test, triggs, expt, volt_keys, info, holo_data, base_data, pre_var_data, bmi_var_data, input_data, limit_size, prev_bmi_diff=None, prev_holo_diff=None) -> dict:
     # Frames from voltage files
     volt_diffs = triggs - info[expt][test][0]
     volt_idx = np.argmin(abs(volt_diffs)) # Does not take into account equal values
@@ -160,6 +161,12 @@ def get_vars(test, triggs, expt, volt_keys, info, holo_data, base_data, pre_var_
         reward_diff = reward_diffs[reward_idx]
 
         bmi_diffs = triggs - int(pre_var_data['data']['frame'])
+        #bmi_neuron = np.array(pre_var_data['data']['bmiAct'], dtype=np.float64)#[0]
+        #bmi_count = len([value for value in bmi_neuron if not math.isnan(value)])
+        #print(int(pre_var_data['data']['frame']))
+        #print(bmi_count)
+        #print(bmi_neuron[:, :np.where(~np.isnan(bmi_neuron).all(axis=0))[0][-1]].T)
+        #exit()
         bmi_idx = np.argmin(abs(bmi_diffs))
         bmi_diff = bmi_diffs[bmi_idx]
 
@@ -167,10 +174,6 @@ def get_vars(test, triggs, expt, volt_keys, info, holo_data, base_data, pre_var_
         holo_diffs = triggs - holo_count
         holo_idx = np.argmin(abs(holo_diffs))
         holo_diff = holo_diffs[holo_idx]
-
-        #pre_var_cursor = pre_var_data['data']['cursor'][0][0][0] # Might not be cursor
-        #cursor_count = len([value for value in pre_var_cursor if not math.isnan(value)])
-        #cursor_diffs = abs(triggs - cursor_count)
 
     elif test == 'BMI':
         reward_diffs = triggs - int(bmi_var_data['data']['selfTargetCounter'])
@@ -184,6 +187,7 @@ def get_vars(test, triggs, expt, volt_keys, info, holo_data, base_data, pre_var_
         # Number of tiff frames should always be 75600
         # Synchronize input 1 and 7 and take into account
         bmi_diffs = triggs - int(bmi_var_data['data']['frame'])
+        #bmi_diffs = triggs - int(bmi_var_data['data']['frame'])
         bmi_idx = np.argmin(abs(bmi_diffs))
         bmi_diff = bmi_diffs[bmi_idx]
 
@@ -192,32 +196,34 @@ def get_vars(test, triggs, expt, volt_keys, info, holo_data, base_data, pre_var_
         no_holo = True 
 
     if abs(bmi_diff) > 3 and not limit_size:
-        print(test)
         print(bmi_diff)
-        #limit_size = True
-        return 'limit size'
+        print(holo_diff)
+        return bmi_diff, holo_diff
 
     volt_vars = ['frames', 'reward', 'bmi', 'holo']
     # Data Appending
-    append_data(int(volt_keys[volt_idx+1].split(' ')[2]), triggs[volt_idx], volt_diff, volt_vars[0], test, expt, input_data)
+    append_data(int(volt_keys[volt_idx+1].split(' ')[2]), triggs[volt_idx], volt_diff, volt_vars[0], test, expt, input_data, False, None)
     if no_reward:
-        append_data(int(volt_keys[reward_idx+1].split(' ')[2]), reward_diff, reward_diff, volt_vars[1], test, expt, input_data)
+        append_data(int(volt_keys[reward_idx+1].split(' ')[2]), reward_diff, reward_diff, volt_vars[1], test, expt, input_data, False, None)
     else:
-        append_data(int(volt_keys[reward_idx+1].split(' ')[2]), triggs[reward_idx], reward_diff, volt_vars[1], test, expt, input_data)
+        append_data(int(volt_keys[reward_idx+1].split(' ')[2]), triggs[reward_idx], reward_diff, volt_vars[1], test, expt, input_data, False, None)
 
-    append_data(int(volt_keys[bmi_idx+1].split(' ')[2]), triggs[bmi_idx], bmi_diff, volt_vars[2], test, expt, input_data)
+    append_data(int(volt_keys[bmi_idx+1].split(' ')[2]), triggs[bmi_idx], bmi_diff, volt_vars[2], test, expt, input_data, limit_size, prev_bmi_diff)
 
     if no_holo:
-        append_data(int(volt_keys[holo_idx+1].split(' ')[2]), holo_diff, holo_diff, volt_vars[3], test, expt, input_data)
+        append_data(int(volt_keys[holo_idx+1].split(' ')[2]), holo_diff, holo_diff, volt_vars[3], test, expt, input_data, limit_size, prev_holo_diff)
     else:
-        append_data(int(volt_keys[holo_idx+1].split(' ')[2]), triggs[holo_idx], holo_diff, volt_vars[3], test, expt, input_data)
+        append_data(int(volt_keys[holo_idx+1].split(' ')[2]), triggs[holo_idx], holo_diff, volt_vars[3], test, expt, input_data, limit_size, prev_holo_diff)
 
     return input_data
 
-def append_data(i, p, d, v, f, e, input_data) -> dict:
+def append_data(i, p, d, v, f, e, input_data, l, pd) -> dict:
+    # Why input_data
     input_data['Variable'].append(v)
     input_data['Peaks'].append(p)
     input_data['Min_Diff'].append(d)
     input_data['Sugg_Input'].append(i)
     input_data['Voltage_File'].append(f)
     input_data['Experiment'].append(e)
+    input_data['Limit_Size'].append(l)
+    input_data['Prev_Min_Diff'].append(pd)
