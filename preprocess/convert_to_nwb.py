@@ -43,6 +43,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
     folder_nwb = folder_raw.parents[0] / 'nwb'
 
     for index, row in df_sessions.iterrows():
+        # TODO: Add behavior!
         folder_bmi_im = Path(folder_raw) / row.session_path / 'im' / row.BMI_im
 
         folder_nwb_mice = folder_nwb / row.mice_name
@@ -68,11 +69,11 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             manufacturer="Coherent",
         )
         # Save the neural data that was store in the mat file
-        holostim_seq_data = loadmat(folder_raw / row.session_path / row.holostim_seq_mat_file)['holoActivity']
+        holostim_seq_data = loadmat(folder_raw / row.session_path / row.Holostim_seq_mat_file)['holoActivity']
         # select holodata that is not nan and transpose to have time x neurons
         holostim_seq_data = holostim_seq_data[:, ~np.isnan(np.sum(holostim_seq_data, 0))].T
         voltage_recording = folder_holobmi_seq_im / row.Holostim_seq_im_voltage_file
-        peaks_I1, _, indices_for_6, indices_for_7, comments_holo = svr.obtain_peaks_voltage(voltage_recording,
+        peaks_I1, _, _, indices_for_6, indices_for_7, comments_holo = svr.obtain_peaks_voltage(voltage_recording,
                                                                                             frame_rate,
                                                                                             size_of_recording)
         if indices_for_7.shape[0] < holostim_seq_data.shape[0]:
@@ -152,8 +153,8 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         baseline_data = loadmat(folder_raw / row.session_path / row.baseline_mat_file)['baseActivity']
         baseline_data = baseline_data[:, ~np.isnan(np.sum(baseline_data, 0))].T
         voltage_recording = folder_baseline_im / row.baseline_im_voltage_file
-        peaks_I1, _, _, indices_for_7, comments_baseline = svr.obtain_peaks_voltage(voltage_recording, frame_rate,
-                                                                                    size_of_recording)
+        peaks_I1, indices_for_4, _, _, indices_for_7, comments_baseline = (
+            svr.obtain_peaks_voltage(voltage_recording, frame_rate, size_of_recording))
         if indices_for_7.shape[0] < baseline_data.shape[0]:
             baseline_data = baseline_data[:indices_for_7.shape[0], :]
             comments_baseline.append(
@@ -191,10 +192,10 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         frame_rate = nwbfile_pretrain.acquisition['TwoPhotonSeries'].rate
         size_of_recording = nwbfile_pretrain.acquisition['TwoPhotonSeries'].data.shape[0]
 
-        pretrain_data = loadmat(folder_raw / row.session_path / row.pretrain_mat_file)['data']['bmiAct'][0][0]
+        pretrain_data = loadmat(folder_raw / row.session_path / row.Pretrain_mat_file)['data']['bmiAct'][0][0]
         pretrain_data = pretrain_data[:, :np.where(~np.isnan(pretrain_data).all(axis=0))[0][-1]].T
         voltage_recording = folder_pretrain_im / row.pretrain_im_voltage_file
-        peaks_I1, indices_for_5, indices_for_6, indices_for_7, comments_pretrain = (
+        peaks_I1, indices_for_4, indices_for_5, indices_for_6, indices_for_7, comments_pretrain = (
             svr.obtain_peaks_voltage(voltage_recording, frame_rate, size_of_recording))
 
         if indices_for_7.shape[0] < pretrain_data.shape[0]:

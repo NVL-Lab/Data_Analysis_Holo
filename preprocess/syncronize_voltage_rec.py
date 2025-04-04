@@ -15,7 +15,7 @@ import numpy as np
 
 
 def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_recording: int, limit_size: bool = False) \
-        -> Tuple[np.array, np.array, np.array, np.array, list]:
+        -> Tuple[np.array, np.array, np.array, np.array, np.array, list]:
     """ Funtion to obtain the peaks of the voltage recording file
     :param voltage_recording: the path to the voltage recording file
         Input_1 = Trigger for each frame of the microscope recording
@@ -39,20 +39,22 @@ def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_rec
         raise Warning(comments)
     else:
         comments.append(f'Triggers for image frames: {peaks_I1.shape[0]} found successfully ')
-
+    peaks_I4, _ = find_peaks(df_voltage[' Input 4'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05)
     peaks_I5, _ = find_peaks(df_voltage[' Input 5'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05,
-                             distance=1000)
+                             distance=100)
     if not limit_size:
         peaks_I6, _ = find_peaks(df_voltage[' Input 6'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05,
-                                 distance=1000)
+                                 distance=100)
         peaks_I7, _ = find_peaks(df_voltage[' Input 7'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05,
                                  distance=15, width=(0, 45))
     else:
         peaks_I6, _ = find_peaks(df_voltage[' Input 6'][:peaks_I5[-1]], prominence=0.05,
-                                 distance=1000)
+                                 distance=100)
         peaks_I7, _ = find_peaks(df_voltage[' Input 7'][:peaks_I5[-1]], prominence=0.05,
                                  distance=15, width=(0, 45))
 
+    indices_for_4 = np.searchsorted(peaks_I1, peaks_I4) - 1
+    indices_for_4 = np.maximum(indices_for_4, 0).astype('int')
     indices_for_5 = np.searchsorted(peaks_I1, peaks_I5) - 1
     indices_for_5 = np.maximum(indices_for_5, 0).astype('int')
     indices_for_6 = np.searchsorted(peaks_I1, peaks_I6) - 1
@@ -60,4 +62,4 @@ def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_rec
     indices_for_7 = np.searchsorted(peaks_I1, peaks_I7) - 1
     indices_for_7 = np.maximum(indices_for_7, 0).astype('int')
 
-    return peaks_I1, indices_for_5, indices_for_6, indices_for_7, comments
+    return peaks_I1, indices_for_4, indices_for_5, indices_for_6, indices_for_7, comments
