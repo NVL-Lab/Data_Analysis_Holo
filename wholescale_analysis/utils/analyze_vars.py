@@ -10,7 +10,7 @@ import math
 def get_voltages(voltage_recording: Path, frame_rate: float, size_of_recording: int, limit_size: bool = False) \
                 -> Tuple[list, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, list]:
     """ 
-        Funtion to obtain the peaks of the voltage recording file
+        Obtains the peaks of the voltage recording file
             :param voltage_recording: the path to the voltage recording file
                 Input_1 = Trigger for each frame of the microscope recording
                 Input_5 = Trigger for reward
@@ -29,28 +29,26 @@ def get_voltages(voltage_recording: Path, frame_rate: float, size_of_recording: 
     peaks_I1, _ = find_peaks(df_voltage[' Input 1'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05, distance=15)
     peaks_I2, _ = find_peaks(df_voltage[' Input 2'][:int(size_of_recording / frame_rate * 1000)], height=0.2, distance=30)
     peaks_I3, _ = find_peaks(df_voltage[' Input 3'][:int(size_of_recording / frame_rate * 1000)], height=0.2, prominence=2, distance=30)
-    peaks_I4, _ = find_peaks(df_voltage[' Input 4'][:int(size_of_recording / frame_rate * 1000)], height=0.2, prominence=3, distance=30)
+    peaks_I4, _ = find_peaks(df_voltage[' Input 4'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05)
     if peaks_I1.shape[0] > size_of_recording:
         comments.append(f'We found more frame triggers {peaks_I1.shape[0]} '
                         f'than the size of the recording {size_of_recording}')
         peaks_I1 = peaks_I1[:size_of_recording]
         print(comments)
-        #raise Warning(comments)
     else:
         comments.append(f'Triggers for image frames: {peaks_I1.shape[0]} found successfully ')
 
     peaks_I5, _ = find_peaks(df_voltage[' Input 5'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05,
-                             distance=1000)
+                             distance=100)
 
     if not limit_size or peaks_I5.size == 0 :
         peaks_I6, _ = find_peaks(df_voltage[' Input 6'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05,
-                                 distance=1000)
+                                 distance=100)
         peaks_I7, _ = find_peaks(df_voltage[' Input 7'][:int(size_of_recording / frame_rate * 1000)], prominence=0.05,
                                   distance=15, width=(0, 45))
-        #peaks_I7, _ = find_peaks(df_voltage[' Input 7'][:int(size_of_recording / frame_rate * 1000)], height=2, distance=15)
     else:
         peaks_I6, _ = find_peaks(df_voltage[' Input 6'][:peaks_I5[-1]], prominence=0.05,
-                                 distance=1000)
+                                 distance=100)
         peaks_I7, _ = find_peaks(df_voltage[' Input 7'][:peaks_I5[-1]], prominence=0.05,
                                  distance=15, width=(0, 45))
 
@@ -63,59 +61,32 @@ def get_voltages(voltage_recording: Path, frame_rate: float, size_of_recording: 
 
     return df_voltage.keys(), peaks_I0, peaks_I1, peaks_I2, peaks_I3, peaks_I4, peaks_I5, peaks_I6, peaks_I7, indices_for_5, indices_for_6, indices_for_7, comments
 
-'''
-            volt_data = pd.read_csv(info[expt][test][1])
-            for col in volt_data.keys()[1:]:
-                fr = 29.988635806461144
-                if col == ' Input 0': # Could be counter (for pre and bmi)
-                    #locs, _ = find_peaks(volt_data[col], height=0.6, prominence=0.6, distance=25)
-                    locs, _ = find_peaks(volt_data[col][:int(info[expt][test][0] / fr * 1000)], height=0.6, prominence=0.6,distance=25)
-                elif col == ' Input 1': # Seems to be the frame counter
-                    #locs, _ = find_peaks(volt_data[col], height=0.2, distance=30)
-                    #locs, _ = find_peaks(volt_data[col][:int(info[expt][test][0] / fr * 1000)], height=2, distance=15)
-                    locs, _ = find_peaks(volt_data[col][:int(info[expt][test][0] / fr * 1000)], height=2.5, distance=30)
-                elif col == ' Input 2': 
-                    #locs, _ = find_peaks(volt_data[col], height=0.2, distance=30)
-                    locs, _ = find_peaks(volt_data[col][:int(info[expt][test][0] / fr * 1000)], height=0.2, distance=30)
-                elif col == ' Input 3': 
-                    #locs, _ = find_peaks(volt_data[col], height=0.2, prominence=2, distance=30)
-                    locs, _ = find_peaks(volt_data[col][:int(info[expt][test][0] / fr * 1000)], height=0.2, prominence=2, distance=30)
-                elif col == ' Input 4': # More precise than 2 or 3 (Could be STC for pre if 3000 apart)
-                    #locs, _ = find_peaks(volt_data[col], height=0.2, prominence=3, distance=30)
-                    locs, _ = find_peaks(volt_data[col][:int(info[expt][test][0] / fr * 1000)], height=0.2, prominence=3, distance=30)
-                elif col == ' Input 5': # Seems to be specific for pretrain and bmi (reward)
-                    #locs, _ = find_peaks(volt_data[col], height=0.1,  distance=30)
-                    #locs, _ = find_peaks(volt_data[col][:int(info[expt][test][0] / fr * 1000)], height=3, distance=1000)
-                    locs, _ = find_peaks(volt_data[col][:int(info[expt][test][0] / fr * 1000)], height=3, prominence=0.1, distance=1000)
-                elif col == ' Input 6': # Seems to be specific for pretrain and holostim (holo)
-                    locs, _ = find_peaks(volt_data[col][:int(info[expt][test][0] / fr * 1000)], height=0.1, prominence = 0.1, distance=1000)
-                    # Remove intial artifact
-                elif col == ' Input 7': # Seems to be the amount of tiff frames
-                    #locs, _ = find_peaks(volt_data[col], height=0.2, distance=30)
-                    #locs, _ = find_peaks(volt_data[col][:int(info[expt][test][0] / fr * 1000)], height=2, distance=15)
-                    locs, _ = find_peaks(volt_data[col][:int(info[expt][test][0] / fr * 1000)], height=2, distance=15)
-                triggs = np.append(triggs, len(locs))
-                if to_plot and test == 'BMI' and col == ' Input 7':
-                    plt.plot(volt_data[col], label='Signal')
-                    plt.plot(locs, volt_data[col][locs], 'rv', label='Peaks')  # Red dots for peaks
-                    plt.xlabel('Time(ms)')
-                    plt.ylabel('Voltage')
-                    plt.title(f'{test}:{col}')
-                    plt.legend()
-                    plt.show()
-                    print('done')
 
-                if col == ' Input 7':
-                    print(triggs)
-                    # FUNCTION
-                    input_data = get_vars(test, triggs, expt, volt_data, info, holo_data, base_data, pre_var_data, bmi_var_data, input_data)
+def get_vars(test: str, triggs: np.array, expt: str, volt_keys: list, info: dict, holo_data: list, base_data: list, pre_var_data: list, bmi_var_data: list, input_data: dict, limit_size: bool = False, prev_bmi_diff: int = None, prev_holo_diff: int = None, last_rew_index: int =None) -> dict:
+    '''
+        Determines what variable corresponds to voltage input
+        Parameters:
+            test: corresponding experiment
+            triggs: triggers for each input
+            expt: date/mouse/day of experiment
+            volt_keys: input names ex. ' Input 0'
+            info: raw data of voltages
+            holo_data: raw holo activity
+            base_data: raw baseline activity
+            pre_var_data: pretrain data
+            bmi_var_data: bmi data
+            input_data: template for results to be added to
+            limit_size: wether size will be limited
+                prev_bmi_diff: minimum bmi difference before limiting size
+                prev_holo_diff: minimum holo difference before limiting size
+                last_rew_index: actual size limit
+        Return:
+            Dictionary with data or tuple with data needed for recall for size limiting
+    '''
     
-'''
-
-def get_vars(test, triggs, expt, volt_keys, info, holo_data, base_data, pre_var_data, bmi_var_data, input_data, limit_size, prev_bmi_diff=None, prev_holo_diff=None) -> dict:
     # Frames from voltage files
     volt_diffs = triggs - info[expt][test][0]
-    volt_idx = np.argmin(abs(volt_diffs)) # Does not take into account equal values
+    volt_idx = np.argmin(abs(volt_diffs))
     volt_diff = volt_diffs[volt_idx]
 
     no_reward = False
@@ -126,99 +97,122 @@ def get_vars(test, triggs, expt, volt_keys, info, holo_data, base_data, pre_var_
         reward_diff = 0
         no_reward = True
 
-        # BMI is the amount stims in one neuron
-        bmi_neuron = holo_data['holoActivity'][0]
-        bmi_count = len([value for value in bmi_neuron if not math.isnan(value)])
-        bmi_diffs = triggs - bmi_count
-        bmi_idx = np.argmin(abs(bmi_diffs)) 
-        bmi_diff = bmi_diffs[bmi_idx]
-
         # Holo stims are the same as amount of neurons
         holo_count = base_data['baseActivity'].shape[0]
         holo_diffs = triggs - holo_count
         holo_idx = np.argmin(abs(holo_diffs))
         holo_diff = holo_diffs[holo_idx]
+
+        # BMI is the amount stims in one neuron
+        bmi_neuron = holo_data['holoActivity'][0]
+        bmi_count = len([value for value in bmi_neuron if not math.isnan(value)])
+        bmi_diffs = triggs - bmi_count
+        bmi_idx = np.argmin(abs(bmi_diffs)) 
+
+        # Handles nstance of having repeating minimum value
+        if bmi_idx != 7:
+            bmi_diffs[bmi_idx] = abs(bmi_diffs[7])+1
+            bmi_idx = np.argmin(abs(bmi_diffs))
+        bmi_diff = bmi_diffs[bmi_idx]
     
     elif test == 'baseline':
         reward_idx = 5
         reward_diff = 0
         no_reward = True
 
-        # BMI is the amount stims in one neuron
+        holo_idx = 6
+        holo_diff = 0
+        no_holo = True 
+
         bmi_neuron = base_data['baseActivity'][0]
         bmi_count = len([value for value in bmi_neuron if not math.isnan(value)])
         bmi_diffs = triggs - bmi_count
         bmi_idx = np.argmin(abs(bmi_diffs)) 
         bmi_diff = bmi_diffs[bmi_idx]
 
-        holo_idx = 6
-        holo_diff = 0
-        no_holo = True 
-
     elif test == 'HoloVTA_pretrain' or test == 'VTA_pretrain' or test == 'Holo_pretrain':
         reward_diffs = triggs - int(pre_var_data['data']['holoTargetCounter'])
         reward_idx = np.argmin(abs(reward_diffs))
         reward_diff = reward_diffs[reward_idx]
 
-        bmi_diffs = triggs - int(pre_var_data['data']['frame'])
-        #bmi_neuron = np.array(pre_var_data['data']['bmiAct'], dtype=np.float64)#[0]
-        #bmi_count = len([value for value in bmi_neuron if not math.isnan(value)])
-        #print(int(pre_var_data['data']['frame']))
-        #print(bmi_count)
-        #print(bmi_neuron[:, :np.where(~np.isnan(bmi_neuron).all(axis=0))[0][-1]].T)
-        #exit()
-        bmi_idx = np.argmin(abs(bmi_diffs))
-        bmi_diff = bmi_diffs[bmi_idx]
-
-        holo_count = len(pre_var_data['data']['vectorHolo'][0, 0].flatten().tolist())
+        holo_count = pre_var_data['data']['holoDelivery'][0][0].sum()
         holo_diffs = triggs - holo_count
         holo_idx = np.argmin(abs(holo_diffs))
         holo_diff = holo_diffs[holo_idx]
+
+        if limit_size:
+            bmi_count = last_rew_index
+        else:
+            bmi_data = pre_var_data['data']['bmiAct'][0][0]
+            bmi_count = len(bmi_data[:, :np.where(~np.isnan(bmi_data).all(axis=0))[0][-1]].T)
+        # Frame value is incorrect: bmi_diffs = triggs - int(pre_var_data['data']['frame'])
+        bmi_diffs = triggs - bmi_count
+        bmi_idx = np.argmin(abs(bmi_diffs))
+        bmi_diff = bmi_diffs[bmi_idx]
+
+        # Determines to limit size
+        if abs(bmi_diff) > 4 and not limit_size:
+            self_reward_indexes = np.where(pre_var_data['data']['selfVTA'][0][0]==1)[1]
+            holo_reward_indexes = np.where(pre_var_data['data']['holoVTA'][0][0]==1)[1]
+            if len(self_reward_indexes) != 0:
+                last_reward_index = self_reward_indexes[-1]
+            elif len(holo_reward_indexes) != 0:
+                last_reward_index = holo_reward_indexes[-1]
+            return volt_diff, reward_diff, bmi_diff, holo_diff, last_reward_index 
+
 
     elif test == 'BMI':
         reward_diffs = triggs - int(bmi_var_data['data']['selfTargetCounter'])
         reward_idx = np.argmin(abs(reward_diffs))
         reward_diff = reward_diffs[reward_idx]
 
-        # Typically has one more than the actual number of tiff images
-        # Remove peaks whose width are greater than 15
-        #   Inside of properties with width=(None, None)
-        #   Try width = (0, 20)
-        # Number of tiff frames should always be 75600
-        # Synchronize input 1 and 7 and take into account
-        bmi_diffs = triggs - int(bmi_var_data['data']['frame'])
-        #bmi_diffs = triggs - int(bmi_var_data['data']['frame'])
-        bmi_idx = np.argmin(abs(bmi_diffs))
-        bmi_diff = bmi_diffs[bmi_idx]
-
         holo_idx = 6
         holo_diff = 0
         no_holo = True 
 
-    if abs(bmi_diff) > 3 and not limit_size:
-        print(bmi_diff)
-        print(holo_diff)
-        return bmi_diff, holo_diff
+        if limit_size:
+            bmi_count = last_rew_index
+        else:
+            bmi_data = bmi_var_data['data']['bmiAct'][0][0]
+            bmi_count = len(bmi_data[:, :np.where(~np.isnan(bmi_data).all(axis=0))[0][-1]].T)
+        # Frame value is incorrect: bmi_diffs = triggs - int(bmi_var_data['data']['frame'])
+        bmi_diffs = triggs - bmi_count
+        bmi_idx = np.argmin(abs(bmi_diffs))
+        bmi_diff = bmi_diffs[bmi_idx]
 
-    volt_vars = ['frames', 'reward', 'bmi', 'holo']
+        # Determines to limit size
+        if abs(bmi_diff) > 4 and not limit_size:
+            self_reward_indexes = np.where(bmi_var_data['data']['selfVTA'][0][0]==1)[1]
+            holo_reward_indexes = np.where(bmi_var_data['data']['holoVTA'][0][0]==1)[1]
+            if len(self_reward_indexes) != 0:
+                last_reward_index = self_reward_indexes[-1]
+            elif len(holo_reward_indexes) != 0:
+                last_reward_index = holo_reward_indexes[-1]
+            return volt_diff, reward_diff, bmi_diff, holo_diff, last_reward_index 
+
     # Data Appending
-    append_data(int(volt_keys[volt_idx+1].split(' ')[2]), triggs[volt_idx], volt_diff, volt_vars[0], test, expt, input_data, False, None)
+    append_data(input_data, int(volt_keys[volt_idx+1].split(' ')[2]), triggs[volt_idx], volt_diff, 'frames', test, expt, False, None)
     if no_reward:
-        append_data(int(volt_keys[reward_idx+1].split(' ')[2]), reward_diff, reward_diff, volt_vars[1], test, expt, input_data, False, None)
+        append_data(input_data, int(volt_keys[reward_idx+1].split(' ')[2]), reward_diff, reward_diff, 'reward', test, expt, False, None)
     else:
-        append_data(int(volt_keys[reward_idx+1].split(' ')[2]), triggs[reward_idx], reward_diff, volt_vars[1], test, expt, input_data, False, None)
+        append_data(input_data, int(volt_keys[reward_idx+1].split(' ')[2]), triggs[reward_idx], reward_diff, 'reward', test, expt, False, None)
 
-    append_data(int(volt_keys[bmi_idx+1].split(' ')[2]), triggs[bmi_idx], bmi_diff, volt_vars[2], test, expt, input_data, limit_size, prev_bmi_diff)
+    append_data(input_data, int(volt_keys[bmi_idx+1].split(' ')[2]), triggs[bmi_idx], bmi_diff, 'bmi', test, expt, limit_size, prev_bmi_diff)
 
     if no_holo:
-        append_data(int(volt_keys[holo_idx+1].split(' ')[2]), holo_diff, holo_diff, volt_vars[3], test, expt, input_data, limit_size, prev_holo_diff)
+        append_data(input_data, int(volt_keys[holo_idx+1].split(' ')[2]), holo_diff, holo_diff, 'holo', test, expt, limit_size, prev_holo_diff)
     else:
-        append_data(int(volt_keys[holo_idx+1].split(' ')[2]), triggs[holo_idx], holo_diff, volt_vars[3], test, expt, input_data, limit_size, prev_holo_diff)
+        append_data(input_data, int(volt_keys[holo_idx+1].split(' ')[2]), triggs[holo_idx], holo_diff, 'holo', test, expt, limit_size, prev_holo_diff)
 
     return input_data
 
-def append_data(i, p, d, v, f, e, input_data, l, pd) -> dict:
-    # Why input_data
+def append_data(input_data: dict, i: int, p: int, d: int, v: str, f: str, e: str, l: bool, pd: int) -> dict:
+    '''
+        Appends data
+        Parameters:
+            Corresponding to dictionary key 
+    '''
+    
     input_data['Variable'].append(v)
     input_data['Peaks'].append(p)
     input_data['Min_Diff'].append(d)

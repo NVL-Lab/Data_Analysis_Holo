@@ -11,12 +11,13 @@ from utils.analyze_vars import get_vars, get_voltages
 from utils.get_data import get_data_df, get_data_rec
 
 if __name__ == '__main__':
-    args = sys.argv[1:]
-    to_plot = False
-    to_csv = True
-    read_df = False
+    args = sys.argv[1:]  # For read_df
+    read_df = False      # Reading of dataframe for raw data retrieval
+    show_all_res = False # Output all results rather
+    to_csv = True        # Coversion of results to csv
+    to_plot = False      # Plotting
 
-    # FUNCTION
+    # Method for acquiring raw data
     if read_df:
         # ~/project/nvl_lab/holo_bmi/Data_Analysis_Holo/wholescale_analysis/files/holobmi_df.parquet
         info = get_data_df(args[0])
@@ -24,11 +25,12 @@ if __name__ == '__main__':
         # /data/project/nvl_lab/HoloBMI/Raw/
         info = get_data_rec(args[0])
 
+    # Checks wether there is data
     if not info:
         print('Data was filtered out')
         exit(1)
 
-    # Table column initialization                         
+    # Results template 
     input_data_temp = {
         'Variable': [], 
         'Peaks': [], 
@@ -39,14 +41,11 @@ if __name__ == '__main__':
         'Limit_Size': [],
         'Prev_Min_Diff': []
         }
-
-    for expt in info:
-        # Lack of input 0?
-        if expt == '191106_NVI20_D02':
-            continue
-        for test in info[expt]:
-            limit_size = False
-            #triggs = np.array([])
+    
+    fr = 29.988635806461144 # Pairie frame rate
+    # Main pipeline for computing voltage peaks and input designation
+    for expt in info: # <date>/<mouse>/<Day>
+        for test in info[expt]: # 'holostim_seq', 'baseline', 'pretrain', 'bmi'
             print(f'Processing {expt}:{test}...')
             if test == 'mats':
                 holo_data = loadmat(info[expt][test][0])
@@ -54,52 +53,45 @@ if __name__ == '__main__':
                 pre_var_data = loadmat(info[expt][test][2])
                 bmi_var_data = loadmat(info[expt][test][3])
                 continue
-            peak_info = get_voltages(info[expt][test][1], 29.988635806461144, info[expt][test][0], limit_size)
+            peak_info = get_voltages(info[expt][test][1], fr, info[expt][test][0]) # Computes voltage trigger peaks
             trigg_peaks = list(peak_info[1:9])
             triggs = [len(peaks) for peaks in trigg_peaks]
-            input_data = get_vars(test, np.array(triggs), expt, peak_info[0], info, holo_data, base_data, pre_var_data, bmi_var_data, input_data_temp, limit_size)
+            # Determines variable and peak count correspondance or do-over (Limiting size method)
+            input_data = get_vars(test, np.array(triggs), expt, peak_info[0], info, holo_data, base_data, pre_var_data, bmi_var_data, input_data_temp) 
+            # A tuple of data means do-over
             if isinstance(input_data, tuple):
-                prev_bmi_diff = input_data[0]
-                prev_holo_diff = input_data[1]
-                input_data = input_data_temp 
-                limit_size = True
-                print('Limiting size of Input 7...')
-                peak_info = get_voltages(info[expt][test][1], 29.988635806461144, info[expt][test][0], limit_size)
+                prev_bmi_diff = input_data[2]  # Previous bmi minimum difference
+                prev_holo_diff = input_data[3] # Previous holo minimum difference
+                bmi_size = input_data[4]       # Size limit to determine new values
+                input_data = input_data_temp   # Allows for previously computed data to be ignored for new
+                print('Limiting size of Input 7...') # Size limit applies to input 7
+                peak_info = get_voltages(info[expt][test][1], fr, info[expt][test][0], True) # Redo with new size
                 trigg_peaks = list(peak_info[1:9])
                 triggs = [len(peaks) for peaks in trigg_peaks]
-                input_data = get_vars(test, np.array(triggs), expt, peak_info[0], info, holo_data, base_data, pre_var_data, bmi_var_data, input_data_temp, limit_size, prev_bmi_diff, prev_holo_diff)
+                # Redo with new size, with previous values for comparison
+                input_data = get_vars(test, np.array(triggs), expt, peak_info[0], info, holo_data, base_data, pre_var_data, bmi_var_data, input_data_temp, True, prev_bmi_diff, prev_holo_diff, bmi_size)
             print(triggs)
 
     input_data = pd.DataFrame(input_data)
-    #pd.set_option('display.max_rows', None)  # Show all rows
-    #pd.set_option('display.max_columns', None)
+    if show_all_res:
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
     print(input_data)
+
+    # Prints variable suggestion percentages per input voltages and minimum difference
     var_pcts = input_data.groupby('Variable')['Sugg_Input'].value_counts(normalize=True)
     print(var_pcts)
-
     var_pcts = input_data.groupby('Variable')['Min_Diff'].value_counts(normalize=True)
     print(var_pcts)
 
     if to_csv:
         input_data.to_csv('results/Suggested_Inputs.csv', index=False)
     
-    '''
-    if q1 == 'n':
-        # holo, baseline, pre, bmi
-        for var in set(input_data['Variable']):
-            var_df = input_data[input_data['Variable'] == var]
-            plt.plot(var_df['Voltage_File'], var_df['Sugg_Input'], '-o', label=var)
+    if to_plot:
+        plt.figure(figsize=(8, 5))
+        sns.barplot(data=input_data, x='Voltage_File', y='Sugg_Input', hue='Variable', errorbar=None, dodge=True)
         plt.xlabel('Voltage File')
-        plt.ylabel('Input')
-        plt.title(f'Input Suggestion for Voltage Files')
-        plt.legend()
+        plt.ylabel('Sugg_Input Count')
+        plt.title('Frequency of Sugg_Input by Voltage File and Variable')
+        plt.legend(title='Variable')
         plt.show()
-    else:
-    '''
-    plt.figure(figsize=(8, 5))
-    sns.barplot(data=input_data, x='Voltage_File', y='Sugg_Input', hue='Variable', errorbar=None, dodge=True)
-    plt.xlabel('Voltage File')
-    plt.ylabel('Sugg_Input Count')
-    plt.title('Frequency of Sugg_Input by Voltage File and Variable')
-    plt.legend(title='Variable')
-    plt.show()
