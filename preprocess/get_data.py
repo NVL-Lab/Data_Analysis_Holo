@@ -96,7 +96,7 @@ def get_data_rec(raw_data_dir) -> dict:
     im_path =  data_path / 'im'
     
     # 'bad' datasets
-    rish_df = pd.read_csv('/home/sgurgua4/project/nvl_lab/holo_bmi/Data_Analysis_Holo/wholescale_analysis/files/df_holobmi.csv') #holobmi_experiments.csv is another one
+    rish_df = pd.read_csv('/home/sgurgua4/project/nvl_lab/holo_bmi/Data_Analysis_Holo/holobmi_df.csv')
      #rish_df['session_path'][rish_df['Flag_BMI'].notna()]
     flag_bmi = list(rish_df[rish_df['Flag_BMI'].notna()]['session_path'])
     flag_bl = list(rish_df[rish_df['flag_baseline_im'].notna()]['session_path'])
@@ -113,7 +113,7 @@ def get_data_rec(raw_data_dir) -> dict:
     if im_path.exists()and im_path.is_dir():
         print('Specific directory given')
     else:
-        data_dates = sorted([d.name for d in data_path.iterdir() if d.is_dir()])[:-2] # Last two are not regular datasets
+        data_dates = sorted([d.name for d in data_path.iterdir() if d.is_dir()])[:-3] # Last three are not regular datasets
         data_paths = {}
         for date in data_dates:
             date_path = data_path / date

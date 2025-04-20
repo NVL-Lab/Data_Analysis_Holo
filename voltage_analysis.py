@@ -7,14 +7,15 @@ from scipy.signal import find_peaks
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from utils.analyze_vars import get_vars, get_voltages
-from utils.get_data import get_data_df, get_data_rec
+from preprocess.analyze_inputs import get_vars
+from preprocess.syncronize_voltage_rec import obtain_peaks_voltage
+from preprocess.get_data import get_data_df, get_data_rec
 
 if __name__ == '__main__':
     args = sys.argv[1:]  # For read_df
     read_df = False      # Reading of dataframe for raw data retrieval
     show_all_res = False # Output all results rather
-    to_csv = True        # Coversion of results to csv
+    to_csv = False       # Coversion of results to csv
     to_plot = False      # Plotting
 
     # Method for acquiring raw data
@@ -53,7 +54,7 @@ if __name__ == '__main__':
                 pre_var_data = loadmat(info[expt][test][2])
                 bmi_var_data = loadmat(info[expt][test][3])
                 continue
-            peak_info = get_voltages(info[expt][test][1], fr, info[expt][test][0]) # Computes voltage trigger peaks
+            peak_info = obtain_peaks_voltage(info[expt][test][1], fr, info[expt][test][0]) # Computes voltage trigger peaks
             trigg_peaks = list(peak_info[1:9])
             triggs = [len(peaks) for peaks in trigg_peaks]
             # Determines variable and peak count correspondance or do-over (Limiting size method)
@@ -65,7 +66,7 @@ if __name__ == '__main__':
                 bmi_size = input_data[4]       # Size limit to determine new values
                 input_data = input_data_temp   # Allows for previously computed data to be ignored for new
                 print('Limiting size of Input 7...') # Size limit applies to input 7
-                peak_info = get_voltages(info[expt][test][1], fr, info[expt][test][0], True) # Redo with new size
+                peak_info = obtain_peaks_voltage(info[expt][test][1], fr, info[expt][test][0], True) # Redo with new size
                 trigg_peaks = list(peak_info[1:9])
                 triggs = [len(peaks) for peaks in trigg_peaks]
                 # Redo with new size, with previous values for comparison
@@ -85,7 +86,7 @@ if __name__ == '__main__':
     print(var_pcts)
 
     if to_csv:
-        input_data.to_csv('results/Suggested_Inputs.csv', index=False)
+        input_data.to_csv('Suggested_Inputs.csv', index=False) # Results in /data/project/nvl_lab/HoloBMI/Raw/
     
     if to_plot:
         plt.figure(figsize=(8, 5))
