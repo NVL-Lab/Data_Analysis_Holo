@@ -23,7 +23,7 @@ will also contain all the data analysis for the paper
   &nbsp;&nbsp;&nbsp;&nbsp;• `analyze_inputs.py` | Analyzes input data for preprocessing  
   &nbsp;&nbsp;&nbsp;&nbsp;• `convert_to_nwb.py` | Converts data to NWB format  
   &nbsp;&nbsp;&nbsp;&nbsp;• `dataframe_sessions.py` | Creates dataframes with all the sessions and the raw files names  
-  &nbsp;&nbsp;&nbsp;&nbsp;• `get_voltage_analysis_prereqs.py` | Retrieves voltage analysis prerequisites  
+  &nbsp;&nbsp;&nbsp;&nbsp;• `get_voltage_analysis_prereqs.py` | Gets the prereq to obtain channels  
   &nbsp;&nbsp;&nbsp;&nbsp;• `run_2_suite2p.py` | Runs the second pass of Suite2p pipeline  
   &nbsp;&nbsp;&nbsp;&nbsp;• `syncronize_voltage_rec.py` | Syncs voltage and imaging recordings  
   &nbsp;&nbsp;&nbsp;&nbsp;• `voltage_analysis.py` | Analyzes voltage data |
