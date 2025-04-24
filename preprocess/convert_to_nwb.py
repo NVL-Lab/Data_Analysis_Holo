@@ -73,9 +73,10 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         # select holodata that is not nan and transpose to have time x neurons
         holostim_seq_data = holostim_seq_data[:, ~np.isnan(np.sum(holostim_seq_data, 0))].T
         voltage_recording = folder_holobmi_seq_im / row.Holostim_seq_im_voltage_file
-        peaks_I1, _, _, indices_for_6, indices_for_7, comments_holo = svr.obtain_peaks_voltage(voltage_recording,
-                                                                                            frame_rate,
-                                                                                            size_of_recording)
+        _, _, peaks_I1, _, _, _, _, peaks_I6, peaks_I7, comments_holo = (
+            svr.obtain_peaks_voltage(voltage_recording,frame_rate, size_of_recording))
+        indices_for_6 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I6)
+        indices_for_7 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I7)
         if indices_for_7.shape[0] < holostim_seq_data.shape[0]:
             holostim_seq_data = holostim_seq_data[:indices_for_7.shape[0], :]
             comments_holo.append('Holostim_seq data has more items than triggers were obtained from the voltage file')
@@ -153,8 +154,11 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         baseline_data = loadmat(folder_raw / row.session_path / row.baseline_mat_file)['baseActivity']
         baseline_data = baseline_data[:, ~np.isnan(np.sum(baseline_data, 0))].T
         voltage_recording = folder_baseline_im / row.baseline_im_voltage_file
-        peaks_I1, indices_for_4, _, _, indices_for_7, comments_baseline = (
-            svr.obtain_peaks_voltage(voltage_recording, frame_rate, size_of_recording))
+        _, _, peaks_I1, _, _, peaks_I4, _, _, peaks_I7, comments_baseline = (
+            svr.obtain_peaks_voltage(voltage_recording,frame_rate, size_of_recording))
+        indices_for_4 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I4)
+        indices_for_7 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I7)
+
         if indices_for_7.shape[0] < baseline_data.shape[0]:
             baseline_data = baseline_data[:indices_for_7.shape[0], :]
             comments_baseline.append(
@@ -195,8 +199,12 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         pretrain_data = loadmat(folder_raw / row.session_path / row.Pretrain_mat_file)['data']['bmiAct'][0][0]
         pretrain_data = pretrain_data[:, :np.where(~np.isnan(pretrain_data).all(axis=0))[0][-1]].T
         voltage_recording = folder_pretrain_im / row.pretrain_im_voltage_file
-        peaks_I1, indices_for_4, indices_for_5, indices_for_6, indices_for_7, comments_pretrain = (
-            svr.obtain_peaks_voltage(voltage_recording, frame_rate, size_of_recording))
+        _, _, peaks_I1, _, _, peaks_I4, peaks_I5, peaks_I6, peaks_I7, comments_pretrain = (
+            svr.obtain_peaks_voltage(voltage_recording,frame_rate, size_of_recording))
+        indices_for_4 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I4)
+        indices_for_5 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I5)
+        indices_for_6 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I6)
+        indices_for_7 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I7)
 
         if indices_for_7.shape[0] < pretrain_data.shape[0]:
             pretrain_data = pretrain_data[:indices_for_7.shape[0], :]
