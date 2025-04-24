@@ -9,7 +9,7 @@ import numpy as np
 import seaborn as sns
 from preprocess.analyze_inputs import get_vars
 from preprocess.syncronize_voltage_rec import obtain_peaks_voltage
-from preprocess.get_data import get_data_df, get_data_rec
+from preprocess.get_voltage_analysis_prereqs import get_data_df, get_data_rec
 
 if __name__ == '__main__':
     args = sys.argv[1:]  # For read_df
