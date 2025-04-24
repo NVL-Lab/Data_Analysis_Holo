@@ -1,7 +1,6 @@
 __author__ = 'Saul'
 
 from pathlib import Path
-from scipy.io import loadmat
 import pandas as pd
 
 def get_data_df(df_dir) -> dict:

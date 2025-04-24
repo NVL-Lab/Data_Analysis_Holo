@@ -3,7 +3,6 @@ __author__ = 'Saul'
 import sys
 from scipy.io import loadmat
 import pandas as pd
-from scipy.signal import find_peaks
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns

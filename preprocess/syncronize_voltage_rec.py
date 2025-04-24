@@ -12,7 +12,8 @@ import pandas as pd
 import numpy as np
 
 def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_recording: int, limit_size: bool = False) \
-        -> Tuple[list, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, list]:
+        -> Tuple[list, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array, np.array,
+        np.array, np.array, np.array, list]:
     """ 
         Obtains the peaks of the voltage recording file
             :param voltage_recording: the path to the voltage recording file
@@ -70,3 +71,10 @@ def obtain_peaks_voltage(voltage_recording: Path, frame_rate: float, size_of_rec
     indices_for_7 = np.maximum(indices_for_7, 0).astype('int')
 
     return df_voltage.keys(), peaks_I0, peaks_I1, peaks_I2, peaks_I3, peaks_I4, peaks_I5, peaks_I6, peaks_I7, indices_for_4, indices_for_5, indices_for_6, indices_for_7, comments
+
+
+def obtain_indices_per_peaks(peaks_A, peaks_B) -> np.array:
+    """ Function to obtain the indices of peaks B closely aligned to the previous peak from A"""
+    indices_peak = np.searchsorted(peaks_A, peaks_B) - 1
+    indices_peak = np.maximum(indices_peak, 0).astype('int')
+    return indices_peak
