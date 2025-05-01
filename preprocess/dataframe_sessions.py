@@ -483,17 +483,3 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
         ret[key].extend([None] * (max_len - len(ret[key])))
 
     return pd.DataFrame(ret)
-
-
-
-
-
-
-
-
-
-
-
-
-df = get_sessions_df('Holostim')
-print(df.head(2))
