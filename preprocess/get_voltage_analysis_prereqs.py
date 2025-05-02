@@ -7,7 +7,7 @@ def get_data_df(df_dir) -> dict:
     '''
         Load voltage data from csv files into pandas dataframes by reading from dataframe.
         
-        Paramaters:
+        Parameters:
             df_dir: directory to the location of dataframe
 
         Returns:
@@ -125,7 +125,7 @@ def get_data_rec(raw_data_dir) -> dict:
             if q1 == 'n':
                 print(data_paths[date_input])
                 mouse_idx = int(input('Choose: '))
-                if mouse_idx >= 0 and mouse_idx < len(data_paths[date_input]):
+                if 0 <= mouse_idx < len(data_paths[date_input]):
                     datasets = [data_paths[date_input][mouse_idx]]
                 else:
                     print('Invlid input')

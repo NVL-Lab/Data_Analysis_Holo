@@ -14,18 +14,18 @@ if __name__ == '__main__':
     args = sys.argv[1:]  # For read_df
     read_df = False      # Reading of dataframe for raw data retrieval
     show_all_res = False # Output all results rather
-    to_csv = False       # Coversion of results to csv
+    to_csv = False       # Conversion of results to csv
     to_plot = False      # Plotting
 
     # Method for acquiring raw data
     if read_df:
-        # ~/project/nvl_lab/holo_bmi/Data_Analysis_Holo/wholescale_analysis/files/holobmi_df.parquet
+        # ~/project/nvl_lab/holo_bmi/Data_Analysis_Holo/holobmi_df.parquet
         info = get_data_df(args[0])
     else:
         # /data/project/nvl_lab/HoloBMI/Raw/
         info = get_data_rec(args[0])
 
-    # Checks wether there is data
+    # Checks whether there is data
     if not info:
         print('Data was filtered out')
         exit(1)
@@ -56,7 +56,7 @@ if __name__ == '__main__':
             peak_info = obtain_peaks_voltage(info[expt][test][1], fr, info[expt][test][0]) # Computes voltage trigger peaks
             trigg_peaks = list(peak_info[1:9])
             triggs = [len(peaks) for peaks in trigg_peaks]
-            # Determines variable and peak count correspondance or do-over (Limiting size method)
+            # Determines variable and peak count correspondence or do-over (Limiting size method)
             input_data = get_vars(test, np.array(triggs), expt, peak_info[0], info, holo_data, base_data, pre_var_data, bmi_var_data, input_data_temp) 
             # A tuple of data means do-over
             if isinstance(input_data, tuple):

@@ -3,7 +3,7 @@ __author__ = 'Saul'
 import numpy as np
 import math
 
-def get_vars(test: str, triggs: np.array, expt: str, volt_keys: list, info: dict, holo_data: list, base_data: list, pre_var_data: list, bmi_var_data: list, input_data: dict, limit_size: bool = False, prev_bmi_diff: int = None, prev_holo_diff: int = None, last_rew_index: int =None) -> dict:
+def get_vars(test: str, triggs: np.array, expt: str, volt_keys: list, info: dict, holo_data: dict, base_data: dict, pre_var_data: dict, bmi_var_data: dict, input_data: dict, limit_size: bool = False, prev_bmi_diff: int = None, prev_holo_diff: int = None, last_rew_index: int =None) -> dict:
     '''
         Determines what variable corresponds to voltage input
         Parameters:
