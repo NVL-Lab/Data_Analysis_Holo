@@ -4,6 +4,7 @@ import json
 import numpy as np
 from pathlib import Path
 from suite2p.run_s2p import run_s2p
+from utils.analysis_constants import AnalysisConstants as act
 
 def get_limited_tiff_files(folder_path, limit):
     """Returns a limited list of TIFF file paths from the given folder."""
@@ -48,7 +49,7 @@ with open(output_folder_file, "r") as f:
 # Get the current batch and output folder
 data_path = valid_batches[SLURM_ARRAY_TASK_ID]
 output_folder = Path(output_folders[str(SLURM_ARRAY_TASK_ID)])  
-tiff_limits = [2600,27000,75600,75600]
+tiff_limits = [act.seq_holo_frames,act.calibration_frames,act.bmi_frames,act.bmi_frames]
 limited_tiff_list = []
 for folder, limit in zip(data_path, tiff_limits):
         limited_tiff_list.extend(get_limited_tiff_files(folder, limit))

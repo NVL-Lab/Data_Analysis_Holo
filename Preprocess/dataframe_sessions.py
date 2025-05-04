@@ -7,7 +7,7 @@ from pathlib import Path
 from datetime import datetime
 import re
 from session_paths import _hE2_rew,_hE2_norew,_hE2_rew_fb,_hE3_rew,_No_Reward_Pretrain,_randrew,_randrew_fb,_BMI
-
+from utils.analysis_constants import AnalysisConstants as act
 
 # def get_all_sessions() -> pd.DataFrame:
 #     """ function to get a df with all sessions"""
@@ -73,10 +73,10 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
                 'holostim_seq': 'Holostim_seq_im'  # Updated naming
             }
             tiff_limits = {
-                "holostim_seq": 2600,
-                "baseline": 27000,
-                "BMI": 75600,
-                "pretrain": 75600  # Assuming pretrain follows the BMI limit
+                "holostim_seq": act.seq_holo_frames,
+                "baseline": act.calibration_frames,
+                "BMI": act.bmi_frames,
+                "pretrain": act.bmi_frames  
             }
             # Initialize columns with None
             for category in category_map.values():
