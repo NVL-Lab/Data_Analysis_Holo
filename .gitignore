@@ -1,0 +1,8 @@
+# Python bytecode
+__pycache__/
+
+# IntelliJ files
+.idea/
+
+# System files
+.DS_Store
