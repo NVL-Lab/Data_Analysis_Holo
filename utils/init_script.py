@@ -9,8 +9,15 @@ import pandas as pd
 
 from pathlib import Path
 from matplotlib import interactive
+from scipy import signal
 from scipy.signal import find_peaks
 from scipy.io import loadmat
+from typing import Tuple, Optional
 
-# from pynwb import NWBHDF5IO, TimeSeries, ogen
+from pynwb import NWBHDF5IO, TimeSeries, ogen
 interactive(True)
+
+
+
+from pynwb import NWBHDF5IO, TimeSeries, ogen
+from preprocess import syncronize_voltage_rec as svr

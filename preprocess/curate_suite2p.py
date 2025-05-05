@@ -1,3 +1,7 @@
+__author__ = 'Nuria'
+
+# __author__ = ("Nuria", "John Doe")
+
 import os
 import shutil
 import copy
@@ -14,48 +18,7 @@ from scipy import signal
 
 from utils.analysis_configuration import AnalysisConfiguration as aconf
 from utils.analysis_constants import AnalysisConstants as act
-from suite2p.run_s2p import run_s2p
-
-
-def obtain_bad_frames_from_fneu(fneu_old: np.array) -> Tuple[np.array, np.array, np.array, np.array, np.array, bool]:
-    """ Function to obtain the frames of stim that need to go """
-    conv_win = np.ones(aconf.filter_size)
-    window = int(aconf.filter_size/2)
-    aux_bad_frames = []
-    st = np.zeros(fneu_old.shape[0])
-    aux_fden = np.zeros(fneu_old.shape)
-    for neu in np.arange(fneu_old.shape[0]):
-    # Fmean = np.nanmean(fneu_old, 0)
-        Fconv = signal.fftconvolve(fneu_old[neu,:], conv_win/conv_win.shape, 'valid')
-        xx = np.arange(window, Fconv.shape[0]+window)
-        poly = np.polyfit(xx, Fconv, 1)
-        aux_f = np.zeros(fneu_old.shape[1])
-        aux_f[:window] = np.polyval(poly, np.arange(window))
-        aux_f[Fconv.shape[0]+window-1:] = np.polyval(poly, np.arange(Fconv.shape[0]-window,Fconv.shape[0]))
-        aux_f[window:Fconv.shape[0]+window] = Fconv
-        F_denoised = fneu_old[neu,:]-aux_f
-        aux_fden[neu, :] = F_denoised
-        st[neu] = ((np.percentile(F_denoised[aconf.index_before_pretrain:
-                                           aconf.index_after_pretrain],
-                                aconf.percentil_threshold)[1]/
-                   np.nanstd(F_denoised[aconf.index_before_pretrain:
-                                        aconf.index_after_pretrain]))/
-                   np.nanstd(F_denoised[aconf.index_after_pretrain:]))
-    top_index = np.argsort(st)[::-1]
-    Fmean = np.nanmean(aux_fden[top_index[:10],:],0)
-    Fmean[Fmean< aconf.height_stim_artifact * np.nanstd(Fmean[aconf.index_before_pretrain:
-                                                              aconf.index_after_pretrain])] = 0
-    bad_frames_index = np.where(Fmean > 0)[0]
-    bad_frames_index.sort()
-    frames_include = np.setdiff1d(np.arange(fneu_old.shape[1]), bad_frames_index)
-    bad_frames_bool = np.zeros(fneu_old.shape[1], dtype=bool)
-    bad_frames_bool[bad_frames_index] = 1
-    stim_index, stim_time_bool = obtain_stim_time(bad_frames_bool)
-    if np.sum(stim_index<act.calibration_frames) > 0:
-        sanity_check = True
-    else:
-        sanity_check = False
-    return bad_frames_index, bad_frames_bool, frames_include, stim_index, stim_time_bool, sanity_check
+from utils.combine_nwb import combine_indices_nwb
 
 
 def refine_classifier(folder_suite2p: Path, dn_bool: bool = True):
@@ -79,6 +42,7 @@ def refine_classifier(folder_suite2p: Path, dn_bool: bool = True):
             is_cell_new[dn, :] = [1, 1]
     np.save(Path(folder_suite2p) / "iscell.npy", is_cell_new)
 
+
 def snr_neuron(folder_suite2p: Path) -> np.array:
     """
     function to find snr of a cell
@@ -92,14 +56,23 @@ def snr_neuron(folder_suite2p: Path) -> np.array:
 
     # Calculate the SNR
     snr = 10 * np.log10(power_signal_all / power_noise_all)
+
+    # Access the PlaneSegmentation object
+    plane_segmentation = nwbfile.processing['ophys'] \
+        .data_interfaces['ImageSegmentation'] \
+        .plane_segmentations['PlaneSegmentation']
+
+    # Add the 'snr' column
+    plane_segmentation.add_column(
+        name='snr',
+        description='Signal-to-noise ratio for each ROI',
+        data=snr_data
+    )
+
+    # Write the changes back to the file
+    io.write(nwbfile)
+
     return snr
-
-
-def obtain_stim_time(bad_frames_bool: np.array) -> Tuple[np.array, np.array]:
-    """ function that reports the time of stim (by returning the first frame of each stim) """
-    stim_index = np.insert(np.diff(bad_frames_bool.astype(int)), 0, 0)
-    stim_index[stim_index < 1] = 0
-    return np.where(stim_index)[0], stim_index.astype(bool)
 
 
 def stability_neuron(folder_suite2p: Path, init: int = 0, end: Optional[int] = None,
@@ -127,5 +100,4 @@ def stability_neuron(folder_suite2p: Path, init: int = 0, end: Optional[int] = N
         arr_stab[i] = check_arr_stability(F_to_analyze[i, :]) and \
                       np.std(low_pass_arr(F_to_analyze[i, :])) < low_pass_std
     return arr_stab
-
 
