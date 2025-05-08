@@ -22,7 +22,7 @@ if __name__ == '__main__':
         # ~/project/nvl_lab/holo_bmi/Data_Analysis_Holo/holobmi_df.parquet
         info = get_data_df(args[0])
     else:
-        # /data/project/nvl_lab/HoloBMI/Raw/
+        # /data/project/nvl_lab/HoloBMI/Raw
         info = get_data_rec(args[0])
 
     # Checks whether there is data
