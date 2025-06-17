@@ -17,7 +17,4 @@ from typing import Tuple, Optional
 from pynwb import NWBHDF5IO, TimeSeries, ogen
 interactive(True)
 
-
-
-from pynwb import NWBHDF5IO, TimeSeries, ogen
 from preprocess import syncronize_voltage_rec as svr

@@ -63,6 +63,8 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         size_of_recording = nwbfile_holographic_seq.acquisition['TwoPhotonSeries'].data.shape[0]
 
         # create the device for holographic stim
+
+        # TODO ANDREA
         holographic_device = nwbfile_holographic_seq.create_device(
             name='Monaco',
             description="Laser used for the holographic stim",
@@ -95,12 +97,13 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             data=holostim_seq_data,
             timestamps=indices_for_7.astype('float64'),
             unit="imaging frames",
-            comments=comments_holo
+            comments="".join(comments_holo)
         )
         nwbfile_holographic_seq.add_acquisition(online_neural_data)
 
         # obtain the holographic metadata and store it (This is done using optogenetic module and not the
         # ndx-holographic which is not working
+        # TODO ANDREA
         tree = ET.parse(folder_raw / row.session_path / row.XML_holostim_seq)
         troot = tree.getroot()
         power = []
@@ -229,6 +232,8 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         )
         nwbfile_pretrain.add_acquisition(online_neural_data)
 
+        # TODO ANDREA : ADD OPTOGENETIC AND CABMI (considering that not all pretrains have holographic)
+
         io_pretrain.write(nwbfile_pretrain)
         io_pretrain.close()
 
@@ -276,6 +281,8 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             unit="imaging frames",
         )
         nwbfile_bmi.add_acquisition(online_neural_data)
+
+        # TODO ANDREA : ADD CABMI 
 
         io_bmi.write(nwbfile_bmi)
         io_bmi.close()
