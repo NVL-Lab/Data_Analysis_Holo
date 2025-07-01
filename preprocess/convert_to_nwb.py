@@ -321,82 +321,81 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
                 )
                 nwbfile_pretrain.add_acquisition(holo_seq_series)
 
-        #if the file name does not start with h then holostim is not added, BMI is added instead/regardless
+        #if the file name does not start with h then holostim is not added, BMI is added regardless
         #TODO Nuria- fill in the empty gaps     
-        else:
-            pretrain_calibration = Calibration_metadata(
-                name='',
-                description='',
-                category='',
-                about='',
-                feedback_flag=bool,
-                ensemble_indexes='array',
-                decoder='array',
-                target='array',
-                feedback_target='array',
-                ensemble_mean='array',
-                ensemble_sd=''
-            )
-            nwbfile_pretrain.add_lab_meta_data(pretrain_calibration)
+        pretrain_calibration = Calibration_metadata(
+            name='',
+            description='',
+            category='',
+            about='',
+            feedback_flag=bool,
+            ensemble_indexes='array',
+            decoder='array',
+            target='array',
+            feedback_target='array',
+            ensemble_mean='array',
+            ensemble_sd=''
+        )
+        nwbfile_pretrain.add_lab_meta_data(pretrain_calibration)
 
-            pretrain_parameters = Parameters_BMI(
-                name='',
-                description='',
-                category='',
-                about='',
-                back_to_baseline_frames=0,
-                prefix_window_frames=0,
-                dff_baseline_window_frames=0,
-                smooth_window_frames=0,
-                cursor_zscore_bool=bool,
-                relaxation_window_frames=0, 
-                timelimit_frames=0,
-                timeout_window_frames=0,
-                back_to_baseline_threshold='array',
-                conditions_target='array',
-                seconds_per_reward_range='array'
-            )
-            nwbfile_pretrain.add_lab_meta_data(pretrain_parameters)
+        pretrain_parameters = Parameters_BMI(
+            name='',
+            description='',
+            category='',
+            about='',
+            back_to_baseline_frames=0,
+            prefix_window_frames=0,
+            dff_baseline_window_frames=0,
+            smooth_window_frames=0,
+            cursor_zscore_bool=bool,
+            relaxation_window_frames=0, 
+            timelimit_frames=0,
+            timeout_window_frames=0,
+            back_to_baseline_threshold='array',
+            conditions_target='array',
+            seconds_per_reward_range='array'
+        )
+        nwbfile_pretrain.add_lab_meta_data(pretrain_parameters)
 
-            pretrain_series = CaBMISeries(
-                name='',
-                about='',
-                self_hit_counter=0,
-                stim_hit_counter=0,
-                self_reward_counter=0,
-                stim_reward_counter=0,
-                scheduled_stim_counter=0,
-                scheduled_reward_counter=0,
-                trial_counter=0,
-                number_of_hits=0, 
-                number_of_misses=0,
-                last_frame=0,
-                target='array',
-                cursor='array',
-                cursor_audio='array',
-                raw_activity='array',
-                baseline_vector='array',
-                self_hits='boolarray',
-                stim_hits='boolarray',
-                self_reward='boolarray',
-                stim_reward='boolarray',
-                stim_delivery='boolarray',
-                trial_start='boolarray',
-                time_vector='array',
-                scheduled_stim='array',
-                scheduled_reward='boolarray',
-            )
-            nwbfile_pretrain.add_acquisition(pretrain_series)
+        pretrain_series = CaBMISeries(
+            name='',
+            about='',
+            self_hit_counter=0,
+            stim_hit_counter=0,
+            self_reward_counter=0,
+            stim_reward_counter=0,
+            scheduled_stim_counter=0,
+            scheduled_reward_counter=0,
+            trial_counter=0,
+            number_of_hits=0, 
+            number_of_misses=0,
+            last_frame=0,
+            target='array',
+            cursor='array',
+            cursor_audio='array',
+            raw_activity='array',
+            baseline_vector='array',
+            self_hits='boolarray',
+            stim_hits='boolarray',
+            self_reward='boolarray',
+            stim_reward='boolarray',
+            stim_delivery='boolarray',
+            trial_start='boolarray',
+            time_vector='array',
+            scheduled_stim='array',
+            scheduled_reward='boolarray',
+        )
+        nwbfile_pretrain.add_acquisition(pretrain_series)
 
-            pretrain_roi = ROI_metadata(
-                name='',
-                description='',
-                category='',
-                about='',
-                pixel_rois=np.ones((4, 5, 6))
-                
-            )
-            nwbfile_pretrain.add_acquisition(pretrain_roi)
+        pretrain_roi = ROI_metadata(
+            name='',
+            description='',
+            category='',
+            about='',
+            pixel_rois=np.ones((4, 5, 6))
+            
+        )
+        nwbfile_pretrain.add_acquisition(pretrain_roi)
 
 
         io_pretrain.write(nwbfile_pretrain)
