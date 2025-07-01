@@ -62,14 +62,14 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             name='Monaco',
             description="Laser used for the holographic stim",
             manufacturer="Coherent",
-            stimulation_wavelength=0.,
+            stimulation_wavelength=0., #float
             filter_description=""
         )
     
     holo_spatial_light_modulator = SpatialLightModulator(
             name="these experiments don't use a SLM",
             model='',
-            resolution=0.
+            resolution=0. #float
         )
     
     for index, row in df_sessions.iterrows():
@@ -154,33 +154,34 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             description="Sequential stimulation of all the neurons selected as initial ROIs",
             excitation_lambda=1035.,  # nm
             location="all initial ROIs",
-            effector=''
+            effector='' #ligth effector protein, not required
         )
         nwbfile_holographic_seq.add_ogen_site(holo_stim_site)
         for pt in np.arange(len(point)):
             holo_stim_pattern = SpiralScanning(
+                #spiral scanning parameters should be correct
                 name=str(index[pt]),
                 description='',
-                duration=30.,
+                duration=30.0,
                 number_of_stimulus_presentation=1,
                 inter_stimulus_interval=2000,
                 diameter=spiral_size[pt],
-                height=0.,
+                height=0.0, 
                 number_of_revolutions=10
             )
             nwbfile_holographic_seq.add_lab_meta_data(holo_stim_pattern)
 
             holo_seq_series = PatternedOptogeneticSeries(
-                name="Holographic sequential",
-                rate=0.,
-                unit='',
-                description="Tuple with information about the index of stim, the neuron stimulated and the power",
+                name='',
+                rate=0., #float
+                unit='', #usually watts
+                description='',
                 site=holo_stim_site,
                 device=microscope,
                 light_source=holo_light_source,
                 spatial_light_modulator=holo_spatial_light_modulator,
                 stimulus_pattern=holo_stim_pattern,
-                pixel_rois=holostim_seq_data
+                pixel_rois=np.array([]) #2D array for pixels ([x, y]) 3D for voxels ([x, y, z])
             )
             nwbfile_holographic_seq.add_acquisition(holo_seq_series)
 
@@ -285,7 +286,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             nwbfile_pretrain.add_device(holo_light_source)
             nwbfile_pretrain.add_device(holo_spatial_light_modulator)
 
-            pretrain_stim_site = PatternedOptogeneticStimulusSite(
+            pretrain_holo_stim_site = PatternedOptogeneticStimulusSite(
             name="Holographic sequential location",
             device=holo_light_source,
             description="Sequential stimulation of all the neurons selected as initial ROIs",
@@ -293,33 +294,34 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             location="all initial ROIs",
             effector=''
             )
-            nwbfile_pretrain.add_ogen_site(pretrain_stim_site)
-            for pt in np.arange(len(point)):
-                holo_stim_pattern = SpiralScanning(
-                    name=str(index[pt]),
-                    description='',
-                    duration=100.,
-                    number_of_stimulus_presentation=1,
-                    inter_stimulus_interval=2000,
-                    diameter=spiral_size[pt],
-                    height=0.,
-                    number_of_revolutions=10
-                )
-                nwbfile_pretrain.add_lab_meta_data(holo_stim_pattern)
+            nwbfile_pretrain.add_ogen_site(pretrain_holo_stim_site)
+            
+            #in case the spiral scanning is different for every neuron than this needs a for loop 
+            pretrain_holo_stim_pattern = SpiralScanning(
+                name='',
+                description='',
+                duration=0., #float
+                number_of_stimulus_presentation=0, #int
+                inter_stimulus_interval=0., #float
+                diameter=0., #float
+                height=0., #float
+                number_of_revolutions=0 #int
+            )
+            nwbfile_pretrain.add_lab_meta_data(pretrain_holo_stim_pattern)
 
-                holo_seq_series = PatternedOptogeneticSeries(
-                    name="Holographic sequential",
-                    rate=0.,
-                    unit='',
-                    description="Tuple with information about the index of stim, the neuron stimulated and the power",
-                    site=holo_stim_site,
-                    device=microscope,
-                    light_source=holo_light_source,
-                    spatial_light_modulator=holo_spatial_light_modulator,
-                    stimulus_pattern=holo_stim_pattern,
-                    pixel_rois=holostim_seq_data
-                )
-                nwbfile_pretrain.add_acquisition(holo_seq_series)
+            pretrain_holo_seq_series = PatternedOptogeneticSeries(
+                name="Holographic sequential",
+                rate=0., #float
+                unit='', #usually watts
+                description='',
+                site=pretrain_holo_stim_site,
+                device=microscope,
+                light_source=holo_light_source,
+                spatial_light_modulator=holo_spatial_light_modulator,
+                stimulus_pattern=pretrain_holo_stim_pattern,
+                pixel_rois=np.array([]) #2D array for pixels ([x, y]) 3D for voxels ([x, y, z])
+            )
+            nwbfile_pretrain.add_acquisition(pretrain_holo_seq_series)
 
         #if the file name does not start with h then holostim is not added, BMI is added regardless
         #TODO Nuria- fill in the empty gaps     
@@ -328,13 +330,13 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             description='',
             category='',
             about='',
-            feedback_flag=bool,
-            ensemble_indexes='array',
-            decoder='array',
-            target='array',
-            feedback_target='array',
-            ensemble_mean='array',
-            ensemble_sd=''
+            feedback_flag=False, #bool
+            ensemble_indexes=np.array([]), #1D array, dtype int, dims number of ensemble neurons,
+            decoder=np.array([]), #1D array, dtype float, dims number of ensemble neurons
+            target=np.array([]), #1D array, dtype float, dims number of targets
+            feedback_target=np.array([]), #1D array, dtype float, dims number of audio targets
+            ensemble_mean=np.array([]), #1D array, dtype float, dims number of ensemble neurons
+            ensemble_sd=np.array([]) #1D array, dtype float, dims number of ensemble neurons
         )
         nwbfile_pretrain.add_lab_meta_data(pretrain_calibration)
 
@@ -343,47 +345,47 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             description='',
             category='',
             about='',
-            back_to_baseline_frames=0,
-            prefix_window_frames=0,
-            dff_baseline_window_frames=0,
-            smooth_window_frames=0,
-            cursor_zscore_bool=bool,
-            relaxation_window_frames=0, 
-            timelimit_frames=0,
-            timeout_window_frames=0,
-            back_to_baseline_threshold='array',
-            conditions_target='array',
-            seconds_per_reward_range='array'
+            back_to_baseline_frames=0, #int
+            prefix_window_frames=0, #int
+            dff_baseline_window_frames=0, #int
+            smooth_window_frames=0, #int
+            cursor_zscore_bool=False, #bool
+            relaxation_window_frames=0, #int
+            timelimit_frames=0, #int
+            timeout_window_frames=0, #int
+            back_to_baseline_threshold=np.array([]), #1D array, dtype float, dims number of targets
+            conditions_target=np.array([]), #1D array, dtype float, dims number of conditions
+            seconds_per_reward_range=np.array([]) #1D array, dtype int, dims lower_value/higher_value (2)
         )
         nwbfile_pretrain.add_lab_meta_data(pretrain_parameters)
 
         pretrain_series = CaBMISeries(
             name='',
             about='',
-            self_hit_counter=0,
-            stim_hit_counter=0,
-            self_reward_counter=0,
-            stim_reward_counter=0,
-            scheduled_stim_counter=0,
-            scheduled_reward_counter=0,
-            trial_counter=0,
-            number_of_hits=0, 
-            number_of_misses=0,
-            last_frame=0,
-            target='array',
-            cursor='array',
-            cursor_audio='array',
-            raw_activity='array',
-            baseline_vector='array',
-            self_hits='boolarray',
-            stim_hits='boolarray',
-            self_reward='boolarray',
-            stim_reward='boolarray',
-            stim_delivery='boolarray',
-            trial_start='boolarray',
-            time_vector='array',
-            scheduled_stim='array',
-            scheduled_reward='boolarray',
+            self_hit_counter=0, #int 
+            stim_hit_counter=0, #int
+            self_reward_counter=0, #int
+            stim_reward_counter=0, #int
+            scheduled_stim_counter=0, #int
+            scheduled_reward_counter=0, #int
+            trial_counter=0, #int
+            number_of_hits=0, #int
+            number_of_misses=0, #int
+            last_frame=0, #int
+            target=np.array([]), #1D array, dtype float, dims number of targets
+            cursor=np.array([]), #1D array, dtype float, dims degree_freedom/BMI_frames
+            cursor_audio=np.array([]), #1D array, dtype int, dims degree_freedom/BMI_frames
+            raw_activity=np.array([]), #2D array, dtype float, dims number of ensemble neurons - BMi_frames
+            baseline_vector=np.array([]), #2D array, dtype float, dims number of ensemble neurons - BMi_frames
+            self_hits=np.array([]), #1D array, dtype bool, dims BMI_frames
+            stim_hits=np.array([]), #1D array, dtype bool, dims BMI_frames
+            self_reward=np.array([]), #1D array, dtype bool, dims BMI_frames
+            stim_reward=np.array([]), #1D array, dtype bool, dims BMI_frames
+            stim_delivery=np.array([]), #1D array, dtype bool, dims BMI_frames
+            trial_start=np.array([]), #1D array, dtype bool, dims BMI_frames
+            time_vector=np.array([]), #1D array, dtype float, dims BMI_frames
+            scheduled_stim=np.array([]), #1D array, dtype int, dims number_stims
+            scheduled_reward=np.array([]), #1D array, dtype int, dims number_rewards
         )
         nwbfile_pretrain.add_acquisition(pretrain_series)
 
@@ -392,8 +394,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             description='',
             category='',
             about='',
-            pixel_rois=np.ones((4, 5, 6))
-            
+            pixel_rois=np.array([]) #2D array for pixels ([x, y]) 3D for voxels ([x, y, z])
         )
         nwbfile_pretrain.add_acquisition(pretrain_roi)
 
@@ -453,13 +454,13 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             description='',
             category='',
             about='',
-            feedback_flag=bool,
-            ensemble_indexes='array',
-            decoder='array',
-            target='array',
-            feedback_target='array',
-            ensemble_mean='array',
-            ensemble_sd=''
+            feedback_flag=False, #bool
+            ensemble_indexes=np.array([]), #1D array, dtype int, dims number of ensemble neurons,
+            decoder=np.array([]), #1D array, dtype float, dims number of ensemble neurons
+            target=np.array([]), #1D array, dtype float, dims number of targets
+            feedback_target=np.array([]), #1D array, dtype float, dims number of audio targets
+            ensemble_mean=np.array([]), #1D array, dtype float, dims number of ensemble neurons
+            ensemble_sd=np.array([]) #1D array, dtype float, dims number of ensemble neurons
         )
         nwbfile_bmi.add_lab_meta_data(bmi_calibration)
 
@@ -468,47 +469,47 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             description='',
             category='',
             about='',
-            back_to_baseline_frames=0,
-            prefix_window_frames=0,
-            dff_baseline_window_frames=0,
-            smooth_window_frames=0,
-            cursor_zscore_bool=bool,
-            relaxation_window_frames=0, 
-            timelimit_frames=0,
-            timeout_window_frames=0,
-            back_to_baseline_threshold='array',
-            conditions_target='array',
-            seconds_per_reward_range='array'
+            back_to_baseline_frames=0, #int
+            prefix_window_frames=0, #int
+            dff_baseline_window_frames=0, #int
+            smooth_window_frames=0, #int
+            cursor_zscore_bool=False, #bool
+            relaxation_window_frames=0, #int
+            timelimit_frames=0, #int
+            timeout_window_frames=0, #int
+            back_to_baseline_threshold=np.array([]), #1D array, dtype float, dims number of targets
+            conditions_target=np.array([]), #1D array, dtype float, dims number of conditions
+            seconds_per_reward_range=np.array([]) #1D array, dtype int, dims lower_value/higher_value (2)
         )
         nwbfile_bmi.add_lab_meta_data(bmi_parameters)
 
         bmi_series = CaBMISeries(
             name='',
             about='',
-            self_hit_counter=0,
-            stim_hit_counter=0,
-            self_reward_counter=0,
-            stim_reward_counter=0,
-            scheduled_stim_counter=0,
-            scheduled_reward_counter=0,
-            trial_counter=0,
-            number_of_hits=0, 
-            number_of_misses=0,
-            last_frame=0,
-            target='array',
-            cursor='array',
-            cursor_audio='array',
-            raw_activity='array',
-            baseline_vector='array',
-            self_hits='boolarray',
-            stim_hits='boolarray',
-            self_reward='boolarray',
-            stim_reward='boolarray',
-            stim_delivery='boolarray',
-            trial_start='boolarray',
-            time_vector='array',
-            scheduled_stim='array',
-            scheduled_reward='boolarray',
+            self_hit_counter=0, #int 
+            stim_hit_counter=0, #int
+            self_reward_counter=0, #int
+            stim_reward_counter=0, #int
+            scheduled_stim_counter=0, #int
+            scheduled_reward_counter=0, #int
+            trial_counter=0, #int
+            number_of_hits=0, #int
+            number_of_misses=0, #int
+            last_frame=0, #int
+            target=np.array([]), #1D array, dtype float, dims number of targets
+            cursor=np.array([]), #1D array, dtype float, dims degree_freedom/BMI_frames
+            cursor_audio=np.array([]), #1D array, dtype int, dims degree_freedom/BMI_frames
+            raw_activity=np.array([]), #2D array, dtype float, dims number of ensemble neurons - BMi_frames
+            baseline_vector=np.array([]), #2D array, dtype float, dims number of ensemble neurons - BMi_frames
+            self_hits=np.array([]), #1D array, dtype bool, dims BMI_frames
+            stim_hits=np.array([]), #1D array, dtype bool, dims BMI_frames
+            self_reward=np.array([]), #1D array, dtype bool, dims BMI_frames
+            stim_reward=np.array([]), #1D array, dtype bool, dims BMI_frames
+            stim_delivery=np.array([]), #1D array, dtype bool, dims BMI_frames
+            trial_start=np.array([]), #1D array, dtype bool, dims BMI_frames
+            time_vector=np.array([]), #1D array, dtype float, dims BMI_frames
+            scheduled_stim=np.array([]), #1D array, dtype int, dims number_stims
+            scheduled_reward=np.array([]), #1D array, dtype int, dims number_rewards
         )
         nwbfile_bmi.add_acquisition(bmi_series)
 
@@ -517,8 +518,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             description='',
             category='',
             about='',
-            pixel_rois=np.ones((4, 5, 6))
-            
+            pixel_rois=np.array([]) #2D array for pixels ([x, y]) 3D for voxels ([x, y, z])
         )
         nwbfile_bmi.add_acquisition(bmi_roi)
         
