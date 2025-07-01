@@ -7,6 +7,11 @@ __author__ = 'Nuria'
 import numpy as np
 import pandas as pd
 import xml.etree.ElementTree as ET
+from pynwb.device import Device
+
+from ndx_holostim import LightSource, SpatialLightModulator
+from ndx_holostim import PatternedOptogeneticSeries, SpiralScanning, PatternedOptogeneticStimulusSite
+from ndx_cabmi import Parameters_BMI, ROI_metadata, Calibration_metadata, CaBMISeries
 
 from scipy.io import loadmat
 from pynwb import NWBHDF5IO, TimeSeries, ogen
@@ -42,7 +47,30 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
     """ function to convert all experiments within a experiment type to nwb"""
     df_sessions = ds.get_sessions_df(experiment_type)
     folder_nwb = folder_raw.parents[0] / 'nwb'
+    
+    microscope = Device(
+        name='',
+        description='',
+        manufacturer='',
+        model_number='',
+        model_name='',
+        serial_number=''
+    )
 
+    holo_light_source= LightSource(
+            name='Monaco',
+            description="Laser used for the holographic stim",
+            manufacturer="Coherent",
+            stimulation_wavelength=0.,
+            filter_description=""
+        )
+    
+    holo_spatial_light_modulator = SpatialLightModulator(
+            name='',
+            model='',
+            resolution=0.
+        )
+    
     for index, row in df_sessions.iterrows():
         # TODO: Add behavior!
 
@@ -65,11 +93,11 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         # create the device for holographic stim
 
         # TODO ANDREA
-        holographic_device = nwbfile_holographic_seq.create_device(
-            name='Monaco',
-            description="Laser used for the holographic stim",
-            manufacturer="Coherent",
-        )
+        
+        nwbfile_holographic_seq.add_device(microscope)
+        nwbfile_holographic_seq.add_device(holo_light_source)
+        nwbfile_holographic_seq.add_device(holo_spatial_light_modulator)
+
         # Save the neural data that was store in the mat file
         holostim_seq_data = loadmat(folder_raw / row.session_path / row.Holostim_seq_mat_file)['holoActivity']
         # select holodata that is not nan and transpose to have time x neurons
@@ -109,34 +137,53 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         power = []
         point = []
         index = []
+        spiral_size = []
         for elem in troot.findall('PVMarkPointElement'):
             power.append(float(elem.get('UncagingLaserPower')))
             point.append(float(elem.find('PVGalvoPointElement').get('Points')[-1]))
             index.append(float(elem.find('PVGalvoPointElement').get('Indices')))
+            spiral_size.append(float(elem.find('PVGalvoPointElement').get('SpiralSize')))
         if len(point) != len(index) or len(point) != holostim_seq_data.shape[1]:
             comments_holoseries = 'The number of stims locations is not consistent with data retrieved'
             Warning(comments_holoseries)
         else:
             comments_holoseries = 'All points were stimulated sequentially'
 
-        ogen_stim_seq_site = ogen.OptogeneticStimulusSite(
+        holo_stim_site = PatternedOptogeneticStimulusSite(
             name="Holographic sequential location",
-            device=holographic_device,
+            device=holo_light_source,
             description="Sequential stimulation of all the neurons selected as initial ROIs",
             excitation_lambda=1035.,  # nm
             location="all initial ROIs",
+            effector=''
         )
-        nwbfile_holographic_seq.add_ogen_site(ogen_stim_seq_site)
+        nwbfile_holographic_seq.add_ogen_site(holo_stim_site)
+        for pp in np.arange(len(point)):
+            holo_stim_pattern = SpiralScanning(
+                name=str(index[pp]),
+                description='',
+                duration=100.,
+                number_of_stimulus_presentation=1,
+                inter_stimulus_interval=2000,
+                diameter=spiral_size[pp],
+                height=0.,
+                number_of_revolutions=10
+            )
+            nwbfile_holographic_seq.add_lab_meta_data(holo_stim_pattern)
 
-        ogen_seq_series = ogen.OptogeneticSeries(
-            name="Holographic sequential",
-            data=list(zip(index, point, power)),
-            description="Tuple with information about the index of stim, the neuron stimulated and the power",
-            site=ogen_stim_seq_site,
-            timestamps=indices_for_6.astype('float64'),
-            comments=comments_holoseries
-        )
-        nwbfile_holographic_seq.add_stimulus(ogen_seq_series)
+            holo_seq_series = PatternedOptogeneticSeries(
+                name="Holographic sequential",
+                rate=0.,
+                unit='',
+                description="Tuple with information about the index of stim, the neuron stimulated and the power",
+                site=holo_stim_site,
+                device=microscope,
+                light_source=holo_light_source,
+                spatial_light_modulator=holo_spatial_light_modulator,
+                stimulus_pattern=holo_stim_pattern,
+                pixel_rois=holostim_seq_data
+            )
+            nwbfile_holographic_seq.add_acquisition(holo_seq_series)
 
         # write and close the nwb file
         io_holographic_seq.write(nwbfile_holographic_seq)
@@ -232,6 +279,122 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         )
         nwbfile_pretrain.add_acquisition(online_neural_data)
 
+        if row.mice_name[0] == "h":
+            nwbfile_pretrain.add_device(microscope)
+            nwbfile_pretrain.add_device(holo_light_source)
+            nwbfile_pretrain.add_device(holo_spatial_light_modulator)
+
+            pretrain_stim_site = PatternedOptogeneticStimulusSite(
+            name="Holographic sequential location",
+            device=holo_light_source,
+            description="Sequential stimulation of all the neurons selected as initial ROIs",
+            excitation_lambda=1035.,  # nm
+            location="all initial ROIs",
+            effector=''
+        )
+            nwbfile_pretrain.add_ogen_site(pretrain_stim_site)
+            for pp in np.arange(len(point)):
+                holo_stim_pattern = SpiralScanning(
+                    name=str(index[pp]),
+                    description='',
+                    duration=100.,
+                    number_of_stimulus_presentation=1,
+                    inter_stimulus_interval=2000,
+                    diameter=spiral_size[pp],
+                    height=0.,
+                    number_of_revolutions=10
+                )
+                nwbfile_pretrain.add_lab_meta_data(holo_stim_pattern)
+
+                holo_seq_series = PatternedOptogeneticSeries(
+                    name="Holographic sequential",
+                    rate=0.,
+                    unit='',
+                    description="Tuple with information about the index of stim, the neuron stimulated and the power",
+                    site=holo_stim_site,
+                    device=microscope,
+                    light_source=holo_light_source,
+                    spatial_light_modulator=holo_spatial_light_modulator,
+                    stimulus_pattern=holo_stim_pattern,
+                    pixel_rois=holostim_seq_data
+                )
+                nwbfile_pretrain.add_acquisition(holo_seq_series)
+            
+            else:
+                pretrain_calibration = Calibration_metadata(
+                    name='',
+                    description='',
+                    category='',
+                    about='',
+                    feedback_flag=bool,
+                    ensemble_indexes='array',
+                    decoder='array',
+                    target='array',
+                    feedback_target='array',
+                    ensemble_mean='array',
+                    ensemble_sd=''
+                )
+                nwbfile_pretrain.add_lab_meta_data(pretrain_calibration)
+
+                pretrain_parameters = Parameters_BMI(
+                    name='',
+                    description='',
+                    category='',
+                    about='',
+                    back_to_baseline_frames=0,
+                    prefix_window_frames=0,
+                    dff_baseline_window_frames=0,
+                    smooth_window_frames=0,
+                    cursor_zscore_bool=bool,
+                    relaxation_window_frames=0, 
+                    timelimit_frames=0,
+                    timeout_window_frames=0,
+                    back_to_baseline_threshold='array',
+                    conditions_target='array',
+                    seconds_per_reward_range='array'
+                )
+                nwbfile_pretrain.add_lab_meta_data(bmi_parameters)
+
+                bmi_series = CaBMISeries(
+                    name='',
+                    about='',
+                    self_hit_counter=0,
+                    stim_hit_counter=0,
+                    self_reward_counter=0,
+                    stim_reward_counter=0,
+                    scheduled_stim_counter=0,
+                    scheduled_reward_counter=0,
+                    trial_counter=0,
+                    number_of_hits=0, 
+                    number_of_misses=0,
+                    last_frame=0,
+                    target='array',
+                    cursor='array',
+                    cursor_audio='array',
+                    raw_activity='array',
+                    baseline_vector='array',
+                    self_hits='boolarray',
+                    stim_hits='boolarray',
+                    self_reward='boolarray',
+                    stim_reward='boolarray',
+                    stim_delivery='boolarray',
+                    trial_start='boolarray',
+                    time_vector='array',
+                    scheduled_stim='array',
+                    scheduled_reward='boolarray',
+                )
+                nwbfile_pretrain.add_acquisition(bmi_series)
+
+                bmi_roi = ROI_metadata(
+                    name='',
+                    description='',
+                    category='',
+                    about='',
+                    pixel_rois=np.ones((4, 5, 6))
+                    
+                )
+                nwbfile_pretrain.add_acquisition(bmi_roi)
+
         # TODO ANDREA : ADD OPTOGENETIC AND CABMI (considering that not all pretrains have holographic)
 
         io_pretrain.write(nwbfile_pretrain)
@@ -240,7 +403,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         # =====================================================================================================
         #                   BMI
         # =====================================================================================================
-        # convert data and open file
+        # convert data and open file         # TODO ANDREA : ADD CABMI
         folder_bmi_im = Path(folder_raw) / row.session_path / 'im' / row.BMI_im
         nwbfile_bmi_path = f"{folder_nwb_mice / row.mice_name}_{row.session_date}_bmi.nwb"
         convert_bruker_images_to_nwb(folder_bmi_im, nwbfile_bmi_path)
@@ -282,7 +445,79 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         )
         nwbfile_bmi.add_acquisition(online_neural_data)
 
-        # TODO ANDREA : ADD CABMI 
+        bmi_calibration = Calibration_metadata(
+            name='',
+            description='',
+            category='',
+            about='',
+            feedback_flag=bool,
+            ensemble_indexes='array',
+            decoder='array',
+            target='array',
+            feedback_target='array',
+            ensemble_mean='array',
+            ensemble_sd=''
+        )
+        nwbfile_bmi.add_lab_meta_data(bmi_calibration)
 
+        bmi_parameters = Parameters_BMI(
+            name='',
+            description='',
+            category='',
+            about='',
+            back_to_baseline_frames=0,
+            prefix_window_frames=0,
+            dff_baseline_window_frames=0,
+            smooth_window_frames=0,
+            cursor_zscore_bool=bool,
+            relaxation_window_frames=0, 
+            timelimit_frames=0,
+            timeout_window_frames=0,
+            back_to_baseline_threshold='array',
+            conditions_target='array',
+            seconds_per_reward_range='array'
+        )
+        nwbfile_bmi.add_lab_meta_data(bmi_parameters)
+
+        bmi_series = CaBMISeries(
+            name='',
+            about='',
+            self_hit_counter=0,
+            stim_hit_counter=0,
+            self_reward_counter=0,
+            stim_reward_counter=0,
+            scheduled_stim_counter=0,
+            scheduled_reward_counter=0,
+            trial_counter=0,
+            number_of_hits=0, 
+            number_of_misses=0,
+            last_frame=0,
+            target='array',
+            cursor='array',
+            cursor_audio='array',
+            raw_activity='array',
+            baseline_vector='array',
+            self_hits='boolarray',
+            stim_hits='boolarray',
+            self_reward='boolarray',
+            stim_reward='boolarray',
+            stim_delivery='boolarray',
+            trial_start='boolarray',
+            time_vector='array',
+            scheduled_stim='array',
+            scheduled_reward='boolarray',
+        )
+        nwbfile_bmi.add_acquisition(bmi_series)
+
+        bmi_roi = ROI_metadata(
+            name='',
+            description='',
+            category='',
+            about='',
+            pixel_rois=np.ones((4, 5, 6))
+            
+        )
+        nwbfile_bmi.add_acquisition(bmi_roi)
+        
         io_bmi.write(nwbfile_bmi)
         io_bmi.close()
