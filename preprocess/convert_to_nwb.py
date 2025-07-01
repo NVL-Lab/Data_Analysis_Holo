@@ -48,6 +48,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
     df_sessions = ds.get_sessions_df(experiment_type)
     folder_nwb = folder_raw.parents[0] / 'nwb'
     
+    #TODO Nuria - add information about microscope and light source
     microscope = Device(
         name='',
         description='',
@@ -66,7 +67,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         )
     
     holo_spatial_light_modulator = SpatialLightModulator(
-            name='',
+            name="these experiments don't use a SLM",
             model='',
             resolution=0.
         )
@@ -90,9 +91,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         frame_rate = nwbfile_holographic_seq.acquisition['TwoPhotonSeries'].rate
         size_of_recording = nwbfile_holographic_seq.acquisition['TwoPhotonSeries'].data.shape[0]
 
-        # create the device for holographic stim
-
-        # TODO ANDREA
+        # add the device for holographic stim
         
         nwbfile_holographic_seq.add_device(microscope)
         nwbfile_holographic_seq.add_device(holo_light_source)
@@ -129,9 +128,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         )
         nwbfile_holographic_seq.add_acquisition(online_neural_data)
 
-        # obtain the holographic metadata and store it (This is done using optogenetic module and not the
-        # ndx-holographic which is not working
-        # TODO ANDREA
+        # obtain the holographic metadata and store it
         tree = ET.parse(folder_raw / row.session_path / row.XML_holostim_seq)
         troot = tree.getroot()
         power = []
@@ -148,7 +145,9 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             Warning(comments_holoseries)
         else:
             comments_holoseries = 'All points were stimulated sequentially'
-
+        
+        #creating and storing optogenetic stimulus site, stimulation pattern (spiral scanning, unique for every neuron), and patterned series (also, unique for every neuron)
+        #TODO Nuria - fill in the empty gaps
         holo_stim_site = PatternedOptogeneticStimulusSite(
             name="Holographic sequential location",
             device=holo_light_source,
@@ -158,14 +157,14 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             effector=''
         )
         nwbfile_holographic_seq.add_ogen_site(holo_stim_site)
-        for pp in np.arange(len(point)):
+        for pt in np.arange(len(point)):
             holo_stim_pattern = SpiralScanning(
-                name=str(index[pp]),
+                name=str(index[pt]),
                 description='',
-                duration=100.,
+                duration=30.,
                 number_of_stimulus_presentation=1,
                 inter_stimulus_interval=2000,
-                diameter=spiral_size[pp],
+                diameter=spiral_size[pt],
                 height=0.,
                 number_of_revolutions=10
             )
@@ -278,7 +277,9 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             unit="imaging frames",
         )
         nwbfile_pretrain.add_acquisition(online_neural_data)
-
+        
+        #if pretrain includes holobmi the file name starts with an h. The program includes holostim consequently
+        #TODO Nuria - fill in the empty gaps
         if row.mice_name[0] == "h":
             nwbfile_pretrain.add_device(microscope)
             nwbfile_pretrain.add_device(holo_light_source)
@@ -291,16 +292,16 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             excitation_lambda=1035.,  # nm
             location="all initial ROIs",
             effector=''
-        )
+            )
             nwbfile_pretrain.add_ogen_site(pretrain_stim_site)
-            for pp in np.arange(len(point)):
+            for pt in np.arange(len(point)):
                 holo_stim_pattern = SpiralScanning(
-                    name=str(index[pp]),
+                    name=str(index[pt]),
                     description='',
                     duration=100.,
                     number_of_stimulus_presentation=1,
                     inter_stimulus_interval=2000,
-                    diameter=spiral_size[pp],
+                    diameter=spiral_size[pt],
                     height=0.,
                     number_of_revolutions=10
                 )
@@ -319,83 +320,84 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
                     pixel_rois=holostim_seq_data
                 )
                 nwbfile_pretrain.add_acquisition(holo_seq_series)
-            
-            else:
-                pretrain_calibration = Calibration_metadata(
-                    name='',
-                    description='',
-                    category='',
-                    about='',
-                    feedback_flag=bool,
-                    ensemble_indexes='array',
-                    decoder='array',
-                    target='array',
-                    feedback_target='array',
-                    ensemble_mean='array',
-                    ensemble_sd=''
-                )
-                nwbfile_pretrain.add_lab_meta_data(pretrain_calibration)
 
-                pretrain_parameters = Parameters_BMI(
-                    name='',
-                    description='',
-                    category='',
-                    about='',
-                    back_to_baseline_frames=0,
-                    prefix_window_frames=0,
-                    dff_baseline_window_frames=0,
-                    smooth_window_frames=0,
-                    cursor_zscore_bool=bool,
-                    relaxation_window_frames=0, 
-                    timelimit_frames=0,
-                    timeout_window_frames=0,
-                    back_to_baseline_threshold='array',
-                    conditions_target='array',
-                    seconds_per_reward_range='array'
-                )
-                nwbfile_pretrain.add_lab_meta_data(bmi_parameters)
+        #if the file name does not start with h then holostim is not added, BMI is added instead/regardless
+        #TODO Nuria- fill in the empty gaps     
+        else:
+            pretrain_calibration = Calibration_metadata(
+                name='',
+                description='',
+                category='',
+                about='',
+                feedback_flag=bool,
+                ensemble_indexes='array',
+                decoder='array',
+                target='array',
+                feedback_target='array',
+                ensemble_mean='array',
+                ensemble_sd=''
+            )
+            nwbfile_pretrain.add_lab_meta_data(pretrain_calibration)
 
-                bmi_series = CaBMISeries(
-                    name='',
-                    about='',
-                    self_hit_counter=0,
-                    stim_hit_counter=0,
-                    self_reward_counter=0,
-                    stim_reward_counter=0,
-                    scheduled_stim_counter=0,
-                    scheduled_reward_counter=0,
-                    trial_counter=0,
-                    number_of_hits=0, 
-                    number_of_misses=0,
-                    last_frame=0,
-                    target='array',
-                    cursor='array',
-                    cursor_audio='array',
-                    raw_activity='array',
-                    baseline_vector='array',
-                    self_hits='boolarray',
-                    stim_hits='boolarray',
-                    self_reward='boolarray',
-                    stim_reward='boolarray',
-                    stim_delivery='boolarray',
-                    trial_start='boolarray',
-                    time_vector='array',
-                    scheduled_stim='array',
-                    scheduled_reward='boolarray',
-                )
-                nwbfile_pretrain.add_acquisition(bmi_series)
+            pretrain_parameters = Parameters_BMI(
+                name='',
+                description='',
+                category='',
+                about='',
+                back_to_baseline_frames=0,
+                prefix_window_frames=0,
+                dff_baseline_window_frames=0,
+                smooth_window_frames=0,
+                cursor_zscore_bool=bool,
+                relaxation_window_frames=0, 
+                timelimit_frames=0,
+                timeout_window_frames=0,
+                back_to_baseline_threshold='array',
+                conditions_target='array',
+                seconds_per_reward_range='array'
+            )
+            nwbfile_pretrain.add_lab_meta_data(pretrain_parameters)
 
-                bmi_roi = ROI_metadata(
-                    name='',
-                    description='',
-                    category='',
-                    about='',
-                    pixel_rois=np.ones((4, 5, 6))
-                    
-                )
-                nwbfile_pretrain.add_acquisition(bmi_roi)
+            pretrain_series = CaBMISeries(
+                name='',
+                about='',
+                self_hit_counter=0,
+                stim_hit_counter=0,
+                self_reward_counter=0,
+                stim_reward_counter=0,
+                scheduled_stim_counter=0,
+                scheduled_reward_counter=0,
+                trial_counter=0,
+                number_of_hits=0, 
+                number_of_misses=0,
+                last_frame=0,
+                target='array',
+                cursor='array',
+                cursor_audio='array',
+                raw_activity='array',
+                baseline_vector='array',
+                self_hits='boolarray',
+                stim_hits='boolarray',
+                self_reward='boolarray',
+                stim_reward='boolarray',
+                stim_delivery='boolarray',
+                trial_start='boolarray',
+                time_vector='array',
+                scheduled_stim='array',
+                scheduled_reward='boolarray',
+            )
+            nwbfile_pretrain.add_acquisition(pretrain_series)
 
-        # TODO ANDREA : ADD OPTOGENETIC AND CABMI (considering that not all pretrains have holographic)
+            pretrain_roi = ROI_metadata(
+                name='',
+                description='',
+                category='',
+                about='',
+                pixel_rois=np.ones((4, 5, 6))
+                
+            )
+            nwbfile_pretrain.add_acquisition(pretrain_roi)
+
 
         io_pretrain.write(nwbfile_pretrain)
         io_pretrain.close()
@@ -403,7 +405,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         # =====================================================================================================
         #                   BMI
         # =====================================================================================================
-        # convert data and open file         # TODO ANDREA : ADD CABMI
+        # convert data and open file
         folder_bmi_im = Path(folder_raw) / row.session_path / 'im' / row.BMI_im
         nwbfile_bmi_path = f"{folder_nwb_mice / row.mice_name}_{row.session_date}_bmi.nwb"
         convert_bruker_images_to_nwb(folder_bmi_im, nwbfile_bmi_path)
@@ -444,7 +446,9 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             unit="imaging frames",
         )
         nwbfile_bmi.add_acquisition(online_neural_data)
-
+        
+        #creating and storing BMI related data
+        #TODO Nuria - fill the empty gaps
         bmi_calibration = Calibration_metadata(
             name='',
             description='',
