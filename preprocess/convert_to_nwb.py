@@ -282,7 +282,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         )
         nwbfile_bmi.add_acquisition(online_neural_data)
 
-        # TODO ANDREA : ADD CABMI 
+        # TODO ANDREA : ADD CABMI
 
         io_bmi.write(nwbfile_bmi)
         io_bmi.close()
