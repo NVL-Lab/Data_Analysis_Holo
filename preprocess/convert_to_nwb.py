@@ -446,6 +446,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             unit="imaging frames",
         )
         nwbfile_bmi.add_acquisition(online_neural_data)
+
         
         #creating and storing BMI related data
         #TODO Nuria - fill the empty gaps
@@ -522,5 +523,8 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         )
         nwbfile_bmi.add_acquisition(bmi_roi)
         
+        # TODO ANDREA : ADD CABMI
+
+
         io_bmi.write(nwbfile_bmi)
         io_bmi.close()
