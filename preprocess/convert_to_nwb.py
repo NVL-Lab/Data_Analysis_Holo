@@ -3,6 +3,11 @@ __author__ = 'Nuria'
 # __author__ = ("Nuria", "John Doe")
 
 # make sure to be in environment with pynwb and neuroconv installed
+# In this case we use:
+# https://neuroconv.readthedocs.io/en/main/conversion_examples_gallery/imaging/brukertiff.html
+# it also needs pip install roiextractors
+# make sure the ndx-templates for CaBMI and Holographic_stim are installed
+# (see repositories in lab's github)
 
 import numpy as np
 import pandas as pd
@@ -25,11 +30,7 @@ from utils.analysis_configuration import AnalysisConfiguration as aconf
 from utils.analysis_constants import AnalysisConstants as act
 
 
-# you need to install neuroconv converter first. In this case we use:
-# https://neuroconv.readthedocs.io/en/main/conversion_examples_gallery/imaging/brukertiff.html
-
-
-def convert_bruker_images_to_nwb(folder_path: Path, nwbfile_path: str):
+def convert_bruker_images_to_nwb(folder_path: Path, microscope: Device, nwbfile_path: str):
     """ function to convert a bruker tiff file recording to nwb
     :param folder_path: path to the folder containing the tiff files
     :param nwbfile_path: path where we want to store the nwb file"""
@@ -40,6 +41,8 @@ def convert_bruker_images_to_nwb(folder_path: Path, nwbfile_path: str):
     tzinfo = ZoneInfo("US/Eastern")
     metadata["NWBFile"].update(
         session_start_time=session_start_time.replace(tzinfo=tzinfo))  # TODO this doesn't seem to work properly
+    metadata["Ophys"]['Device'][0]['description'] = microscope.description
+    metadata['Ophys']['ImagingPlane'][0]['excitation_lambda'] = 920.0
     converter.run_conversion(nwbfile_path=nwbfile_path, metadata=metadata)
 
 
@@ -48,11 +51,10 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
     df_sessions = ds.get_sessions_df(experiment_type)
     folder_nwb = folder_raw.parents[0] / 'nwb'
     
-    #TODO Nuria - add information about microscope and light source
     microscope = Device(
-        name='',
-        description='',
-        manufacturer='',
+        name='Chameleon',
+        description='Ti:Sapphire Laser',
+        manufacturer='Coherent',
         model_number='',
         model_name='',
         serial_number=''
@@ -60,15 +62,15 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
 
     holo_light_source= LightSource(
             name='Monaco',
-            description="Laser used for the holographic stim",
+            description="high-power femtosecond laser",
             manufacturer="Coherent",
-            stimulation_wavelength=0., #float
+            stimulation_wavelength=1035.,
             filter_description=""
         )
     
     holo_spatial_light_modulator = SpatialLightModulator(
-            name="these experiments don't use a SLM",
-            model='',
+            name="No SLM",
+            model='stimulation was sequential',
             resolution=0. #float
         )
     
@@ -85,7 +87,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         # convert data and open file
         folder_holobmi_seq_im = Path(folder_raw) / row.session_path / 'im' / row.Holostim_seq_im
         nwbfile_holograph_seq_path = f"{folder_nwb_mice / row.mice_name}_{row.session_date}_holostim_seq.nwb"
-        convert_bruker_images_to_nwb(folder_holobmi_seq_im, nwbfile_holograph_seq_path)
+        convert_bruker_images_to_nwb(folder_holobmi_seq_im, microscope, nwbfile_holograph_seq_path)
         io_holographic_seq = NWBHDF5IO(nwbfile_holograph_seq_path, mode="a")
         nwbfile_holographic_seq = io_holographic_seq.read()
         frame_rate = nwbfile_holographic_seq.acquisition['TwoPhotonSeries'].rate
@@ -102,20 +104,18 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
         # select holodata that is not nan and transpose to have time x neurons
         holostim_seq_data = holostim_seq_data[:, ~np.isnan(np.sum(holostim_seq_data, 0))].T
         voltage_recording = folder_holobmi_seq_im / row.Holostim_seq_im_voltage_file
-        _, _, peaks_I1, _, _, _, _, peaks_I6, peaks_I7, comments_holo = (
+        _, _, peaks_I1, _, _, _, _, peaks_I6, peaks_I7, comments_holo_neural = (
             svr.obtain_peaks_voltage(voltage_recording,frame_rate, size_of_recording))
         indices_for_6 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I6)
         indices_for_7 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I7)
         if indices_for_7.shape[0] < holostim_seq_data.shape[0]:
             holostim_seq_data = holostim_seq_data[:indices_for_7.shape[0], :]
-            comments_holo.append('Holostim_seq data has more items than triggers were obtained from the voltage file')
-            raise Warning(comments_holo)
+            comments_holo_neural.append('Holostim_seq data has more items than triggers were obtained from the voltage file')
         elif indices_for_7.shape[0] > holostim_seq_data.shape[0]:
             indices_for_7 = indices_for_7[:holostim_seq_data.shape[0]]
-            comments_holo.append('Holostim_seq data has less items than triggers were obtained from the voltage file')
-            raise Warning(comments_holo)
+            comments_holo_neural.append('Holostim_seq data has less items than triggers were obtained from the voltage file')
         else:
-            comments_holo.append('conversion worked correctly')
+            comments_holo_neural.append('conversion worked correctly')
 
         online_neural_data = TimeSeries(
             name="online_neural_activity",
@@ -124,64 +124,81 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: str):
             data=holostim_seq_data,
             timestamps=indices_for_7.astype('float64'),
             unit="imaging frames",
-            comments="".join(comments_holo)
+            comments="".join(comments_holo_neural)
         )
         nwbfile_holographic_seq.add_acquisition(online_neural_data)
 
         # obtain the holographic metadata and store it
-        tree = ET.parse(folder_raw / row.session_path / row.XML_holostim_seq)
-        troot = tree.getroot()
+        tree_xml = ET.parse(folder_raw / row.session_path / row.XML_holostim_seq)
+        troot_xml = tree_xml.getroot()
         power = []
-        point = []
         index = []
-        spiral_size = []
-        for elem in troot.findall('PVMarkPointElement'):
+        delay = []
+        duration = []
+        spiral_rev = []
+        for elem in troot_xml.findall('PVMarkPointElement'):
             power.append(float(elem.get('UncagingLaserPower')))
-            point.append(float(elem.find('PVGalvoPointElement').get('Points')[-1]))
             index.append(float(elem.find('PVGalvoPointElement').get('Indices')))
-            spiral_size.append(float(elem.find('PVGalvoPointElement').get('SpiralSize')))
-        if len(point) != len(index) or len(point) != holostim_seq_data.shape[1]:
+            delay.append(float(elem.find('PVGalvoPointElement').get('InterPointDelay')))
+            duration.append(float(elem.find('PVGalvoPointElement').get('Duration')))
+            spiral_rev.append(int(elem.find('PVGalvoPointElement').get('SpiralRevolutions')))
+        tree_gpl = ET.parse(folder_raw / row.session_path / row.HoloMask_gpl_file)
+        troot_gpl = tree_gpl.getroot()
+        spiral_size = []
+        loc_x = []
+        loc_y = []
+        loc_z = []
+        for elem in troot_gpl.findall('PVGalvoPoint'):
+            spiral_size.append(float(elem.get('SpiralSize')))
+            loc_x.append(float(elem.get('X')))
+            loc_y.append(float(elem.get('Y')))
+            loc_z.append(float(elem.get('Z')))
+        if len(index) != len(loc_x):
+            raise ValueError('The gpl and xml files have different size of holographic stimulation')
+
+        if len(index) != len(indices_for_6) or len(index) != holostim_seq_data.shape[1]:
             comments_holoseries = 'The number of stims locations is not consistent with data retrieved'
-            Warning(comments_holoseries)
         else:
-            comments_holoseries = 'All points were stimulated sequentially'
+            comments_holoseries = 'All stimulus points correctly retrieved from experimental data'
         
-        #creating and storing optogenetic stimulus site, stimulation pattern (spiral scanning, unique for every neuron), and patterned series (also, unique for every neuron)
-        #TODO Nuria - fill in the empty gaps
+        # creating and storing optogenetic stimulus site, stimulation pattern (spiral scanning, unique for every neuron),
+        # and patterned series (also, unique for every neuron)
         holo_stim_site = PatternedOptogeneticStimulusSite(
             name="Holographic sequential location",
             device=holo_light_source,
             description="Sequential stimulation of all the neurons selected as initial ROIs",
             excitation_lambda=1035.,  # nm
-            location="all initial ROIs",
-            effector='' #ligth effector protein, not required
+            location="motor cortex",
+            effector='ChRmine'  # ligth effector protein, not required
         )
+
         nwbfile_holographic_seq.add_ogen_site(holo_stim_site)
-        for pt in np.arange(len(point)):
+        for pt in np.arange(len(index)):
+
             holo_stim_pattern = SpiralScanning(
                 #spiral scanning parameters should be correct
-                name=str(index[pt]),
-                description='',
-                duration=30.0,
+                name='Single cell stim on neuron ' + str(index[pt]),
+                description='One cell at a time stimulation',
+                duration=duration[pt],
                 number_of_stimulus_presentation=1,
-                inter_stimulus_interval=2000,
+                inter_stimulus_interval=delay[pt],
                 diameter=spiral_size[pt],
-                height=0.0, 
-                number_of_revolutions=10
+                height=loc_z[pt],
+                number_of_revolutions=spiral_rev[pt]
             )
             nwbfile_holographic_seq.add_lab_meta_data(holo_stim_pattern)
 
             holo_seq_series = PatternedOptogeneticSeries(
-                name='',
+                name='Single cell stim on neuron ' + str(index[pt]),
                 rate=0., #float
                 unit='', #usually watts
-                description='',
+                description='One cell at a time stimulation',
                 site=holo_stim_site,
                 device=microscope,
                 light_source=holo_light_source,
                 spatial_light_modulator=holo_spatial_light_modulator,
                 stimulus_pattern=holo_stim_pattern,
-                pixel_rois=np.array([]) #2D array for pixels ([x, y]) 3D for voxels ([x, y, z])
+                center_rois=np.expand_dims(np.array([loc_x[pt], loc_y[pt], spiral_size[pt]]), axis=0)
             )
             nwbfile_holographic_seq.add_acquisition(holo_seq_series)
 
