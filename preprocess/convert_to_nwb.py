@@ -493,8 +493,8 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
         pretrain_roi = ROI_metadata(
             name='ROI_metadata',
             description='Location of the ROIs, in a binary 2D array',
-            image_mask_roi=np.stack(pretrain_rois_mat['roi_bin_cell'].item().flatten())[ensemble_indices, :, :]
-        )
+            image_mask_roi=np.stack(
+                pretrain_rois_mat['roi_bin_cell'].item().flatten())[ensemble_indices, :, :][:, :, :, np.newaxis])
         nwbfile_pretrain.add_acquisition(pretrain_roi)
 
         # retrieve the rewards timing
