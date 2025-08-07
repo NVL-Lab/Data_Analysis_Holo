@@ -83,6 +83,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
     """function to convert all experiments within a experiment type to nwb
     :param folder_raw: folder where all the raw files are located
     :param experiment_type: the type of experiment to process if None all are done"""
+    # get the dataframe with all the session in experiment type.
     df_sessions = ds.get_sessions_df(experiment_type)
     folder_nwb = folder_raw.parents[0] / 'nwb'
 
@@ -161,12 +162,12 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
         print('Holo_sequential: neural data')
         # store the neural data
         holo_online_neural_data = TimeSeries(
-            name='online_neural_activity',
+            name='Online_neural_activity',
             description=(f'neural data obtained online from {holostim_seq_data.shape[1]} neurons while'
                          f' recording for the sequential stimulation of all initial neurons'),
             data=holostim_seq_data,
             timestamps=holo_indices_for_7.astype('float64'),
-            unit='imaging frames',
+            unit='frames',
             comments=''.join(comments_holo_neural)
         )
         nwbfile_holographic_seq.add_acquisition(holo_online_neural_data)
@@ -175,11 +176,11 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
         # obtain the holographic metadata and store it
         tree_xml = ET.parse(folder_raw / row.session_path / row.XML_holostim_seq)
         tree_gpl = ET.parse(folder_raw / row.session_path / row.HoloMask_gpl_file)
-        index, delay, duration, spiral_rev, spiral_size, loc_x, loc_y, loc_z = (
+        stim_point, delay, duration, spiral_rev, spiral_size, loc_x, loc_y, loc_z = (
             retrieve_holographic_point_data(tree_xml, tree_gpl))
 
         # compare indices from voltage rec to online recording
-        if len(index) != len(holo_indices_for_6) or len(index) != holostim_seq_data.shape[1]:
+        if len(stim_point) != len(holo_indices_for_6) or len(stim_point) != holostim_seq_data.shape[1]:
             comments_holo_stim = 'The number of stims locations/times is not consistent with data retrieved'
         else:
             comments_holo_stim = 'All stimulus locations/times correctly retrieved from experimental data'
@@ -187,7 +188,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
         # creating and storing optogenetic stimulus site, stimulation pattern (spiral scanning, unique for every neuron),
         # and patterned series (also, unique for every neuron)
         holo_stim_site = PatternedOptogeneticStimulusSite(
-            name='Holographic sequential location',
+            name='Holographic_sequential_location',
             device=holo_light_source,
             description='Sequential stimulation of all the neurons selected as initial ROIs',
             excitation_lambda=1035.,  # nm
@@ -196,10 +197,10 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
         )
 
         nwbfile_holographic_seq.add_ogen_site(holo_stim_site)
-        for pt in np.arange(len(index)):
+        for pt in np.arange(len(stim_point)):
             holo_stim_pattern = SpiralScanning(
                 # spiral scanning parameters should be correct
-                name='Single cell stim on neuron ' + str(index[pt]),
+                name='Single cell stim on neuron ' + str(stim_point[pt]),
                 description='One cell at a time stimulation',
                 duration=duration[pt],
                 number_of_stimulus_presentation=1,
@@ -211,7 +212,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
             nwbfile_holographic_seq.add_lab_meta_data(holo_stim_pattern)
 
             holo_seq_series = PatternedOptogeneticSeries(
-                name='Single cell stim on neuron ' + str(index[pt]),
+                name='Single cell stim on neuron ' + str(stim_point[pt]),
                 rate=0.,  # float
                 unit='',  # usually watts
                 description='One cell at a time stimulation',
@@ -226,11 +227,11 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
 
         # store the voltage_rec data
         holo_stim_times = TimeSeries(
-            name='Stim times',
+            name='Stim_times',
             description=(f'sequential stim times, information is in timestamps, data is ones'),
             data=np.ones(holo_indices_for_6.shape[0]),
             timestamps=holo_indices_for_6.astype('float64'),
-            unit='Boolean',
+            unit='frames',
             comments=''.join(comments_holo_stim)
         )
         nwbfile_holographic_seq.add_acquisition(holo_stim_times)
@@ -279,15 +280,16 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
 
         print('Baseline: neural data')
         baseline_online_neural_data = TimeSeries(
-            name='online_neural_activity',
+            name='Online_neural_activity',
             description=(f'neural data obtained online from {baseline_data.shape[1]} neurons while'
                          f' recording for the calibration of the BMI'),
             data=baseline_data,
             timestamps=baseline_indices_for_7.astype('float64'),
-            unit='imaging frames',
+            unit='frames',
             comments=''.join(comments_baseline)
         )
         nwbfile_baseline.add_acquisition(baseline_online_neural_data)
+
         io_baseline.write(nwbfile_baseline)
         io_baseline.close()
         print('Baseline: done')
@@ -314,7 +316,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
         pretrain_data = pretrain_data[:, :np.where(~np.isnan(pretrain_data).all(axis=0))[0][-1]].T
         pretrain_calibration_mat = loadmat(folder_raw / row.session_path / row.Target_calibration_mat_file)
         pretrain_rois_mat = loadmat(folder_raw / row.session_path / row.Roi_mat_file)['roi_data']
-        ensemble_indices = np.squeeze(pretrain_calibration['E_base_sel'])
+        ensemble_indices = pretrain_calibration_mat['E_base_sel'].flatten()
         voltage_recording = folder_pretrain_im / row.Pretrain_im_voltage_file
         _, _, peaks_I1, _, _, peaks_I4, peaks_I5, peaks_I6, peaks_I7, comments_pretrain = (
             svr.obtain_peaks_voltage(voltage_recording, frame_rate, size_of_recording))
@@ -339,12 +341,12 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
 
         print('Pretrain: neural data')
         pretrain_online_neural_data = TimeSeries(
-            name='online_neural_activity',
+            name='Online_neural_activity',
             description=(f'neural data obtained online from {pretrain_data.shape[1]} neurons while'
                          f' performing the pretrain of the BMI'),
             data=pretrain_data,
             timestamps=pretrain_indices_for_7.astype('float64'),
-            unit='imaging frames',
+            unit='frames',
             comments=''.join(comments_pretrain)
         )
         nwbfile_pretrain.add_acquisition(pretrain_online_neural_data)
@@ -363,11 +365,11 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
 
             # store the voltage_rec stim times
             pretrain_stim_times = TimeSeries(
-                name='Stim times',
+                name='Stim_times',
                 description=(f'All ensemble neurons stim times, information is in timestamps, data is ones'),
                 data=np.ones(pretrain_indices_for_6.shape[0]),
                 timestamps=pretrain_indices_for_6.astype('float64'),
-                unit='Boolean',
+                unit='frames',
                 comments=''.join(comments_pretrain_stim)
             )
             nwbfile_pretrain.add_acquisition(pretrain_stim_times)
@@ -379,13 +381,13 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
             print('Pretrain: holographic stim data')
             tree_xml = ET.parse(folder_raw / row.session_path / row.XML_ensemble)
             tree_gpl = ET.parse(folder_raw / row.session_path / row.GPL_ensemble)
-            index, delay, duration, spiral_rev, spiral_size, loc_x, loc_y, loc_z = (
+            stim_point, delay, duration, spiral_rev, spiral_size, loc_x, loc_y, loc_z = (
                 retrieve_holographic_point_data(tree_xml, tree_gpl))
 
             # creating and storing optogenetic stimulus site, stimulation pattern (spiral scanning, unique for every neuron),
             # and patterned series (also, unique for every neuron)
             pretrain_stim_site = PatternedOptogeneticStimulusSite(
-                name='Holographic location',
+                name='Holographic_location',
                 device=holo_light_source,
                 description='Sequential/semi-simultaneous stimulation of ' + row.experiment_type[1:3] + ' neurons',
                 excitation_lambda=1035.,  # nm
@@ -394,10 +396,10 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
             )
             nwbfile_pretrain.add_ogen_site(pretrain_stim_site)
 
-            for pt in np.arange(len(index)):
+            for pt in np.arange(len(stim_point)):
                 pretrain_stim_pattern = SpiralScanning(
                     # spiral scanning parameters should be correct
-                    name='Single cell stim on neuron ' + str(index[pt]),
+                    name='Single cell stim on neuron ' + str(stim_point[pt]),
                     description='One cell at a time stimulation',
                     duration=duration[pt],
                     number_of_stimulus_presentation=1,
@@ -409,7 +411,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
                 nwbfile_pretrain.add_lab_meta_data(pretrain_stim_pattern)
 
                 pretrain_stim_series = PatternedOptogeneticSeries(
-                    name='Single cell stim on neuron ' + str(index[pt]),
+                    name='Single cell stim on neuron ' + str(stim_point[pt]),
                     rate=0.,  # float
                     unit='',  # usually watts
                     description='One cell at a time stimulation',
@@ -429,17 +431,17 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
             description='Information needed to calibrate the BMI',
             feedback_flag=False,  # bool
             ensemble_indexes=ensemble_indices,
-            decoder=np.squeeze(pretrain_calibration_mat['decoder']),
-            target=np.squeeze(pretrain_calibration_mat['T'], axis=0),
-            ensemble_mean=np.squeeze(pretrain_calibration_mat['n_mean'], axis=0),
-            ensemble_sd=np.squeeze(pretrain_calibration_mat['n_std'], axis=0)
+            decoder=pretrain_calibration_mat['decoder'].flatten(),
+            target=pretrain_calibration_mat['T'].flatten(),
+            ensemble_mean=pretrain_calibration_mat['n_mean'].flatten(),
+            ensemble_sd=pretrain_calibration_mat['n_std'].flatten()
         )
         nwbfile_pretrain.add_lab_meta_data(pretrain_calibration)
 
         # retrieve the parameters used in the BMI
         pretrain_parameters = Parameters_BMI(
-            name='BMI_parameteres',
-            description='Parameters used for to run the BMI',
+            name='BMI_parameters',
+            description='Parameters used to run the BMI',
             back_to_baseline_frames=pretrain_calibration_mat['back2BaseFramesThresh'].item(),
             prefix_window_frames=pretrain_calibration_mat['prefix_win'].item(),
             dff_baseline_window_frames=pretrain_calibration_mat['f0_win'].item(),
@@ -447,18 +449,18 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
             cursor_zscore_bool=False,
             relaxation_window_frames=0,
             timeout_window_frames=0,
-            back_to_baseline_threshold=np.squeeze(pretrain_calibration_mat['b2base_thresh'], axis=0),
+            back_to_baseline_threshold=pretrain_calibration_mat['b2base_thresh'].flatten(),
             conditions_rule=np.array(['cursor >= c1', 'The mean of E1 <= c2', 'At least 3 out of 4 E2 neurons >= c3'],
                                      dtype='str'),
             conditions_target=np.array([pretrain_calibration_mat['T'].item(), pretrain_calibration_mat['E1_mean'].item(),
-                                        np.squeeze(pretrain_calibration_mat['E2_subord_mean'])], dtype='object'),
-            frames_per_reward_range=np.squeeze(pretrain_calibration_mat['frames_per_reward_range'], axis=0).astype(int)
+                                        pretrain_calibration_mat['E2_subord_mean'].flatten()], dtype='object'),
+            frames_per_reward_range=pretrain_calibration_mat['frames_per_reward_range'].flatten().astype(int)
         )
         nwbfile_pretrain.add_lab_meta_data(pretrain_parameters)
 
         # retrieve the BMI results
         pretrain_results_series = CaBMISeries(
-            name='pretrain_online_results',
+            name='Pretrain_online_results',
             description='Time series results of the CaBMI experiment',
             experiment_type=row.experiment_type,
             self_hit_counter=pretrain_mat['selfTargetCounter'].item().item(),
@@ -471,19 +473,19 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
             number_of_hits=pretrain_mat['selfTargetCounter'].item().item()
                            + pretrain_mat['holoTargetCounter'].item().item(),
             last_frame=pretrain_mat['frame'].item().item(),
-            target=np.squeeze(pretrain_calibration_mat['T'], axis=0),
-            cursor=np.squeeze(pretrain_mat['cursor'].item()),
+            target=pretrain_calibration_mat['T'].flatten(),
+            cursor=pretrain_mat['cursor'].item().flatten(),
             raw_activity=pretrain_data,
             baseline_vector=pretrain_mat['baseVector'].item(),
-            self_hits=np.squeeze(pretrain_mat['selfHits'].item()),
-            stim_hits=np.squeeze(pretrain_mat['holoHits'].item()),
-            self_reward=np.squeeze(pretrain_mat['selfVTA'].item()),
-            stim_reward=np.squeeze(pretrain_mat['holoVTA'].item()),
-            stim_delivery=np.squeeze(pretrain_mat['holoDelivery'].item()),
-            trial_start=np.squeeze(pretrain_mat['trialStart'].item()),
-            time_vector=np.squeeze(pretrain_mat['timeVector'].item()),
-            scheduled_stim=np.squeeze(pretrain_mat['vectorHolo'].item()),
-            scheduled_reward=np.squeeze(pretrain_mat['vectorVTA'].item()),
+            self_hits=pretrain_mat['selfHits'].item().flatten(),
+            stim_hits=pretrain_mat['holoHits'].item().flatten(),
+            self_reward=pretrain_mat['selfVTA'].item().flatten(),
+            stim_reward=pretrain_mat['holoVTA'].item().flatten(),
+            stim_delivery=pretrain_mat['holoDelivery'].item().flatten(),
+            trial_start=pretrain_mat['trialStart'].item().flatten(),
+            time_vector=pretrain_mat['timeVector'].item().flatten(),
+            scheduled_stim=pretrain_mat['vectorHolo'].item().flatten(),
+            scheduled_reward=pretrain_mat['vectorVTA'].item().flatten(),
         )
         nwbfile_pretrain.add_acquisition(pretrain_results_series)
 
@@ -491,7 +493,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
         pretrain_roi = ROI_metadata(
             name='ROI_metadata',
             description='Location of the ROIs, in a binary 2D array',
-            image_mask_roi=np.stack(np.squeeze(pretrain_rois_mat['roi_bin_cell'].item()), axis=0)[ensemble_indices, :, :]
+            image_mask_roi=np.stack(pretrain_rois_mat['roi_bin_cell'].item().flatten())[ensemble_indices, :, :]
         )
         nwbfile_pretrain.add_acquisition(pretrain_roi)
 
@@ -511,7 +513,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
                 description=(f'reward times, information is in timestamps, data is ones'),
                 data=np.ones(pretrain_indices_for_5.shape[0]),
                 timestamps=pretrain_indices_for_5.astype('float64'),
-                unit='Boolean',
+                unit='frames',
                 comments=''.join(comments_pretrain_reward)
             )
             nwbfile_pretrain.add_acquisition(pretrain_reward_times)
@@ -533,6 +535,8 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
         nwbfile_bmi = io_bmi.read()
         frame_rate = nwbfile_bmi.acquisition['TwoPhotonSeries'].rate
         size_of_recording = nwbfile_bmi.acquisition['TwoPhotonSeries'].data.shape[0]
+
+        nwbfile_bmi.add_device(microscope)
 
         print('BMI: retrieving online data')
         bmi_mat = loadmat(folder_raw / row.session_path / row.BMI_mat_file)['data']
@@ -560,27 +564,32 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
 
         print('BMI: neural data')
         online_neural_data = TimeSeries(
-            name='online_neural_activity',
+            name='Online_neural_activity',
             description=(f'neural data obtained online from {bmi_data.shape[1]} neurons while'
                          f' performing the BMI'),
             data=bmi_data,
             timestamps=bmi_indices_for_7.astype('float64'),
-            unit='imaging frames',
+            unit='frames',
         )
         nwbfile_bmi.add_acquisition(online_neural_data)
 
         print('BMI: BMI calibration/Parameters/Results')
+
+        # add the calibration/parameters which are the same as the ones in pretrain
+        nwbfile_bmi.add_lab_meta_data(pretrain_parameters)
+        nwbfile_bmi.add_lab_meta_data(pretrain_calibration)
+
         # creating and storing BMI related data
         if 'fb' in row.experiment_type.lower():
             experiment_bmi = 'audio_feedback'
-            cursor_audio = np.squeeze(bmi_mat['fb_freq'].item())
+            cursor_audio = bmi_mat['fb_freq'].item().flatten()
             if pretrain_calibration_mat['fb_settings']['target_low_freq'].item().item():
-                freq = np.squeeze(pretrain_calibration_mat['fb_settings']['freq_min'].item())
+                freq = pretrain_calibration_mat['fb_settings']['freq_min'].item().flatten()
             else:
-                freq = np.squeeze(pretrain_calibration_mat['fb_settings']['freq_max'].item())
+                freq = pretrain_calibration_mat['fb_settings']['freq_max'].item().flatten()
 
             bmi_calibration = Calibration_metadata(
-                name='Calibration_FB_only_BMI',
+                name='Calibration_feedback',
                 description='Calibration needed to run auditory feedback during the BMI part of the experiment',
                 feedback_flag=True,  # bool
                 feedback_target=freq,  # 1D array, dtype float, dims number of audio targets
@@ -589,6 +598,8 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
         else:
             experiment_bmi = 'no_audio_feedback'
             cursor_audio = np.array([])
+
+        # retrieve timeseries data from BMI
         bmi_series = CaBMISeries(
             name='BMI_online_results',
             description='Time series results of the CaBMI experiment',
@@ -598,15 +609,15 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
             trial_counter=bmi_mat['trialCounter'].item().item(),
             number_of_hits=bmi_mat['selfTargetCounter'].item().item(),
             last_frame=bmi_mat['frame'].item().item(),
-            target=np.squeeze(bmi_mat['T'], axis=0),
-            cursor=np.squeeze(bmi_mat['cursor'].item()),
+            target=pretrain_calibration_mat['T'].flatten(),
+            cursor=bmi_mat['cursor'].item().flatten(),
             cursor_audio=cursor_audio,
             raw_activity=bmi_data,
             baseline_vector=bmi_mat['baseVector'].item(),
-            self_hits=np.squeeze(bmi_mat['selfHits'].item()),
-            self_reward=np.squeeze(bmi_mat['selfVTA'].item()),
-            trial_start=np.squeeze(bmi_mat['trialStart'].item()),
-            time_vector=np.squeeze(bmi_mat['timeVector'].item()),
+            self_hits=bmi_mat['selfHits'].item().flatten(),
+            self_reward=bmi_mat['selfVTA'].item().flatten(),
+            trial_start=bmi_mat['trialStart'].item().flatten(),
+            time_vector=bmi_mat['timeVector'].item().flatten(),
         )
         nwbfile_bmi.add_acquisition(bmi_series)
 
@@ -622,10 +633,12 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
             description=(f'reward times, information is in timestamps, data is ones'),
             data=np.ones(bmi_indices_for_5.shape[0]),
             timestamps=bmi_indices_for_5.astype('float64'),
-            unit='Boolean',
+            unit='frames',
             comments=''.join(comments_bmi_reward)
         )
         nwbfile_bmi.add_acquisition(bmi_reward_times)
+
+        nwbfile_bmi.add_acquisition(pretrain_roi)
 
         io_bmi.write(nwbfile_bmi)
         io_bmi.close()
