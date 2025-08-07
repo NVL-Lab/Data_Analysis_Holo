@@ -1,5 +1,5 @@
 __author__ = 'Nuria'
-# __author__ = ("Nuria", "John Doe")
+# __author__ = ('Nuria', 'John Doe')
 # constants to be used on analysis (for offline processing)
 
 import posixpath
@@ -8,7 +8,7 @@ from typing import Tuple
 
 
 def population_directory(aux_dir: posixpath) -> str:
-    return posixpath.join(aux_dir, "population")
+    return posixpath.join(aux_dir, 'population')
 
 def name_parquet(aux_name: str) -> str:
     return f'{aux_name}.parquet'

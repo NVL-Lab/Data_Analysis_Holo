@@ -2,6 +2,7 @@
 import collections
 import os
 import re
+from typing import Optional
 
 import pandas as pd
 import numpy as np
@@ -362,26 +363,30 @@ def get_all_sessions() -> pd.DataFrame:
 # print(collections.defaultdict(list))
 
 
-
-def get_sessions_df(experiment_type: str) -> pd.DataFrame:
+def get_sessions_df(experiment_type: Optional[str]=None) -> pd.DataFrame:
     experiment_dict = {
-        'Holostim': _Holostim,
-        'HoloE2': _HoloE2,
-        'HoloE3': _HoloE3,
-        'Random_Reward': _Random_Reward,
-        'Feedback_BMI_Random_Reward': _Feedback_BMI_Random_Reward,
-        'Feedback_BMI_Holostim':_Feedback_BMI_Holostim,
-        'No_Reward_Pretrain':_No_Reward_Pretrain,
-        'BMI':_BMI
+        'hE2_rew': _Holostim,
+        'hE2_norew': _HoloE2,
+        'hE3_rew': _HoloE3,
+        'randrew': _Random_Reward,
+        'randrew_fb': _Feedback_BMI_Random_Reward,
+        'hE2_rew_fb':_Feedback_BMI_Holostim,
+        # 'No_Reward_Pretrain':_No_Reward_Pretrain,
+        # 'BMI':_BMI
     }
-    
-    if experiment_type not in experiment_dict:
-        raise ValueError(f'Invalid experiment type: {experiment_type}. Choose from Holostim, HoloE2, HoloE3, Random_Reward, Feedback_BMI_Random_Reward,Feedback_BMI_Holostim,No_Reward_Pretrain,BMI ')
+    if experiment_type is not None:
+        iterable = experiment_dict[experiment_type].items()
+        if experiment_type not in experiment_dict:
+            raise ValueError(f'Invalid experiment type: {experiment_type}. Choose from Holostim, HoloE2, HoloE3, Random_Reward, Feedback_BMI_Random_Reward,Feedback_BMI_Holostim,No_Reward_Pretrain,BMI ')
+    else:
+        iterable = ((mouse, session)
+                    for exp in experiment_dict.values()
+                    for mouse, session in exp.items())
 
     ret = collections.defaultdict(list)
     folder_raw = Path('/data/project/nvl_lab/HoloBMI/Raw')
 
-    for mice_name, sessions in experiment_dict[experiment_type].items():
+    for mice_name, sessions in iterable:
         for day_index, session_path in enumerate(sessions):
             session_date, mice_name, day_init = session_path.split('/')
             ret['mice_name'].append(mice_name)
@@ -417,7 +422,7 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
                             if im_subfolder.startswith(key):
                                 full_subfolder_name = None
                                 for subfolder in os.listdir(im_subfolder_path):
-                                    if subfolder.startswith(f"{key}_"):
+                                    if subfolder.startswith(f'{key}_'):
                                         full_subfolder_name = subfolder
                                         break
 
@@ -425,7 +430,7 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
                                     ret[category][-1] = full_subfolder_name
 
                                     # Look for voltage recording file inside the correct subfolder
-                                    voltage_file_pattern = f"{full_subfolder_name}_Cycle00001_VoltageRecording_001.csv"
+                                    voltage_file_pattern = f'{full_subfolder_name}_Cycle00001_VoltageRecording_001.csv'
                                     voltage_file_path = im_subfolder_path / full_subfolder_name / voltage_file_pattern
 
                                     if voltage_file_path.exists():
@@ -459,7 +464,7 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
                 elif file_name.startswith('BMI_online'):
                     match = re.search(r'BMI_online(\d{6}T\d{6})', file_name)
                     if match:
-                        bmi_files.append((file_name, datetime.strptime(match.group(1), "%y%m%dT%H%M%S")))
+                        bmi_files.append((file_name, datetime.strptime(match.group(1), '%y%m%dT%H%M%S')))
 
             ret['roi'].extend(roi_files)
             ret['BMI_target'].append(bmitarget_files[0] if len(bmitarget_files) == 1 else None)

@@ -1,6 +1,6 @@
 __author__ = 'Nuria'
 
-# __author__ = ("Nuria", "John Doe")
+# __author__ = ('Nuria', 'John Doe')
 
 import pandas as pd
 import numpy as np
@@ -46,7 +46,7 @@ def obtain_bad_frames_from_voltage_rec(voltage_rec_paths: List[str], frame_rate:
 
 def prepare_ops_1st_pass(default_path: Path, ops_path: Path, bad_frames: np.array = np.empty(0)) -> dict:
     """ Function to modify the default ops file before 1st pass"""
-    aux_ops = np.load(Path(default_path) / "default_ops.npy", allow_pickle=True)
+    aux_ops = np.load(Path(default_path) / 'default_ops.npy', allow_pickle=True)
     ops = aux_ops.take(0)
     # ops['nwb_series'] = 'TwoPhotonSeries'
     # ops['nwb_file'] = nwb_filepath
@@ -68,7 +68,7 @@ def process_1_session_suite2p_offline(default_path: Path, folder_suite2p: Path, 
     :param frame_rate: frame rate of the recording"""
 
     if len(folder_im_paths) != len(size_recordings) | len(folder_im_paths) != len(voltage_rec_paths):
-        raise ValueError("The sizes of the list need to be all the same")
+        raise ValueError('The sizes of the list need to be all the same')
 
     db = {
         'data_path': folder_im_paths,

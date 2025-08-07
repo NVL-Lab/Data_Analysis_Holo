@@ -90,7 +90,7 @@ def get_data_rec(raw_data_dir) -> dict:
             test_info: dictionary containing DataFrames with voltage data.
     """
 
-    # voltage path: "recordings path"/im/[bl,pretrain,..]/[name]/[name]_Voltage
+    # voltage path: 'recordings path'/im/[bl,pretrain,..]/[name]/[name]_Voltage
     data_path = Path(raw_data_dir)
     im_path =  data_path / 'im'
     
@@ -116,8 +116,8 @@ def get_data_rec(raw_data_dir) -> dict:
         data_paths = {}
         for date in data_dates:
             date_path = data_path / date
-            data_paths[date] = [d for d in date_path.glob("NVI??/D*")] # Each mouse has one day experiment
-        print("All dates: ")
+            data_paths[date] = [d for d in date_path.glob('NVI??/D*')] # Each mouse has one day experiment
+        print('All dates: ')
         print(data_dates)
         date_input = input('Which date? ')
         if date_input in data_dates:
@@ -146,7 +146,7 @@ def get_data_rec(raw_data_dir) -> dict:
         #flag_names3 = ['191015_NVI12_D20', '191103_NVI13_D34', '191103_NVI16_D34', '191105_NVI17_D01', '191106_NVI22_D02','191111_NVI20_D07', '191115_NVI20_D11', '191212_NVI22_D27', '191212_NVI20_D27', '191212_NVI17_D27', '191213_NVI20_D28', '191214_NVI17_D29']
         ds_name = f'{ds_path.parts[-3]}/{ds_path.parts[-2]}/{ds_path.parts[-1]}'
         flag_names3 = ['191106/NVI20/D02','191015/NVI12/D20', '191103/NVI13/D34', '191103/NVI16/D34', '191105/NVI17/D01', '191106/NVI22/D02','191111/NVI20/D07', '191115/NVI20/D11', '191212/NVI22/D27', '191212/NVI20/D27', '191212/NVI17/D27', '191213/NVI20/D28', '191214/NVI17/D29']
-        # No ' Input 0', only one mat, no pre-train data, no baseline data, no mat files, extra baseline, no pretrain/bmi mat, baseline volt is not csv, no pretrain/bmi mat, ", ", no bmi no rewrd csv, no pretrain/bmi mat
+        # No ' Input 0', only one mat, no pre-train data, no baseline data, no mat files, extra baseline, no pretrain/bmi mat, baseline volt is not csv, no pretrain/bmi mat, ', ', no bmi no rewrd csv, no pretrain/bmi mat
         if ds_name not in good_names:
             continue
         #if ds_name in flag_names:
@@ -164,7 +164,7 @@ def get_data_rec(raw_data_dir) -> dict:
         base_mat = online_data[2]
         
         # Voltage viles
-        test_names = [d.name for d in ds_path.glob("im/*") if not d.name.startswith('.')]
+        test_names = [d.name for d in ds_path.glob('im/*') if not d.name.startswith('.')]
         # tiff counts should be the same for each dataset
         #test_info[f'{ds_path.parts[-3]}_{ds_path.parts[-2]}_{ds_path.parts[-1]}'] = {'mats': [holo_mat, base_mat, pre_mat, bmi_mat]}
         test_info[f'{ds_path.parts[-3]}/{ds_path.parts[-2]}/{ds_path.parts[-1]}'] = {'mats': [holo_mat, base_mat, pre_mat, bmi_mat]}

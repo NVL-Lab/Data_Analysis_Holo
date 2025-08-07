@@ -1,5 +1,5 @@
 __author__ = 'Nuria'
-# __author__ = ("Nuria", "John Doe")
+# __author__ = ('Nuria', 'John Doe')
 # quick script to load all packages to work in ipython
 
 

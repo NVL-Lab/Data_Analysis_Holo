@@ -15,8 +15,8 @@ class AnalysisConfiguration:
     """
 
     # dirs
-    local_dir = Path("C:/Users/nuria/DATA/Analysis/")  # None
-    experiment_dir = Path("F:/data")
+    local_dir = Path('C:/Users/nuria/DATA/Analysis/')  # None
+    experiment_dir = Path('F:/data')
 
 
     # pre-process

@@ -1,6 +1,6 @@
 __author__ = 'Nuria'
 
-# __author__ = ("Nuria", "John Doe")
+# __author__ = ('Nuria', 'John Doe')
 
 import os
 import shutil
@@ -23,8 +23,8 @@ from utils.combine_nwb import combine_indices_nwb
 
 def refine_classifier(folder_suite2p: Path, dn_bool: bool = True):
     """ function to refine the suite2p classifier """
-    neurons = np.load(Path(folder_suite2p) / "stat.npy", allow_pickle=True)
-    is_cell = np.load(Path(folder_suite2p) / "iscell.npy")
+    neurons = np.load(Path(folder_suite2p) / 'stat.npy', allow_pickle=True)
+    is_cell = np.load(Path(folder_suite2p) / 'iscell.npy')
     is_cell_new = copy.deepcopy(is_cell)
     snr_val = snr_neuron(folder_suite2p)
     stable_neuron = stability_neuron(folder_suite2p, init=act.calibration_frames)
@@ -34,13 +34,13 @@ def refine_classifier(folder_suite2p: Path, dn_bool: bool = True):
                 snr_val[nn] < aconf.snr_min or ~stable_neuron[nn]:
             is_cell_new[nn, :] = [0, 0]
     if dn_bool:
-        aux_dn = np.load(Path(folder_suite2p) / "direct_neurons.npy", allow_pickle=True)
+        aux_dn = np.load(Path(folder_suite2p) / 'direct_neurons.npy', allow_pickle=True)
         direct_neurons_info = aux_dn.take(0)
-        direct_neurons = direct_neurons_info["E1"] + direct_neurons_info["E2"]
+        direct_neurons = direct_neurons_info['E1'] + direct_neurons_info['E2']
         direct_neurons.sort()
         for dn in direct_neurons:
             is_cell_new[dn, :] = [1, 1]
-    np.save(Path(folder_suite2p) / "iscell.npy", is_cell_new)
+    np.save(Path(folder_suite2p) / 'iscell.npy', is_cell_new)
 
 
 def snr_neuron(folder_suite2p: Path) -> np.array:
@@ -49,8 +49,8 @@ def snr_neuron(folder_suite2p: Path) -> np.array:
     :param folder_suite2p: folder where the files are stored
     :return: array with the snr of each neuron
     """
-    Fneu = np.load(Path(folder_suite2p) / "Fneu.npy")
-    F_raw = np.load(Path(folder_suite2p) / "F.npy")
+    Fneu = np.load(Path(folder_suite2p) / 'Fneu.npy')
+    F_raw = np.load(Path(folder_suite2p) / 'F.npy')
     power_signal_all = np.nanmean(np.square(F_raw), 1)
     power_noise_all = np.nanmean(np.square(Fneu), 1)
 
@@ -85,11 +85,11 @@ def stability_neuron(folder_suite2p: Path, init: int = 0, end: Optional[int] = N
     :param low_pass_std: the threshold to consider for the low pass check
     :return: array of bools to show stability of each neuron
     """
-    F_raw = np.load(Path(folder_suite2p) / "F.npy")
+    F_raw = np.load(Path(folder_suite2p) / 'F.npy')
     if end is None:
         end = F_raw.shape[1]
     try:
-        bad_frames_dict = np.load(folder_suite2p / "bad_frames_dict.npy", allow_pickle=True).take(0)
+        bad_frames_dict = np.load(folder_suite2p / 'bad_frames_dict.npy', allow_pickle=True).take(0)
         bad_frames_bool = bad_frames_dict['bad_frames_bool'][init:end]
     except FileNotFoundError:
         bad_frames_bool = np.zeros(F_raw.shape[1], dtype=bool)[init:end]
