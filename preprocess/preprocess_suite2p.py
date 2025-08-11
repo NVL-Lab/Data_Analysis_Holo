@@ -1,20 +1,20 @@
 __author__ = 'Nuria'
 
-# __author__ = ("Nuria", "John Doe")
+# __author__ = ('Nuria', 'John Doe')
 
 import pandas as pd
 import numpy as np
 
 from pathlib import Path
-from typing import Tuple, Optional
+from typing import List, Tuple, Optional
 
 from suite2p.run_s2p import run_s2p
 
 from preprocess import syncronize_voltage_rec as svr
 
 
-def obtain_bad_frames_from_voltage_rec(voltage_rec_paths: list[str], frame_rate: float,
-                                       size_recordings: list[int]) -> Tuple[np.array, np.array]:
+def obtain_bad_frames_from_voltage_rec(voltage_rec_paths: List[str], frame_rate: float,
+                                       size_recordings: List[int]) -> Tuple[np.array, np.array]:
     """ function to return the bad_frames of a session based on the voltage recording file
     inside the folders given as folder_im_paths.
     This function is used to put together all voltage recording of a session and obtain the bad_frames
@@ -46,7 +46,7 @@ def obtain_bad_frames_from_voltage_rec(voltage_rec_paths: list[str], frame_rate:
 
 def prepare_ops_1st_pass(default_path: Path, ops_path: Path, bad_frames: np.array = np.empty(0)) -> dict:
     """ Function to modify the default ops file before 1st pass"""
-    aux_ops = np.load(Path(default_path) / "default_ops.npy", allow_pickle=True)
+    aux_ops = np.load(Path(default_path) / 'default_ops.npy', allow_pickle=True)
     ops = aux_ops.take(0)
     # ops['nwb_series'] = 'TwoPhotonSeries'
     # ops['nwb_file'] = nwb_filepath
@@ -56,8 +56,8 @@ def prepare_ops_1st_pass(default_path: Path, ops_path: Path, bad_frames: np.arra
     return ops
 
 
-def process_1_session_suite2p_offline(default_path: Path, folder_suite2p: Path, folder_im_paths: list[str],
-                                      voltage_rec_paths: list[str], size_recordings: list[int],
+def process_1_session_suite2p_offline(default_path: Path, folder_suite2p: Path, folder_im_paths: List[str],
+                                      voltage_rec_paths: List[str], size_recordings: List[int],
                                       frame_rate: float):
     """ Function to process suite2p offline with a tone of info needed
     :param default_path: path where the default ops are stored
@@ -68,7 +68,7 @@ def process_1_session_suite2p_offline(default_path: Path, folder_suite2p: Path, 
     :param frame_rate: frame rate of the recording"""
 
     if len(folder_im_paths) != len(size_recordings) | len(folder_im_paths) != len(voltage_rec_paths):
-        raise ValueError("The sizes of the list need to be all the same")
+        raise ValueError('The sizes of the list need to be all the same')
 
     db = {
         'data_path': folder_im_paths,

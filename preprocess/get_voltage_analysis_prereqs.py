@@ -75,7 +75,7 @@ def get_data_rec(raw_data_dir) -> dict:
             test_info: dictionary containing DataFrames with voltage data.
     """
 
-    # voltage path: "recordings path"/im/[bl,pretrain,..]/[name]/[name]_Voltage
+    # voltage path: 'recordings path'/im/[bl,pretrain,..]/[name]/[name]_Voltage
     data_path = Path(raw_data_dir)
     im_path =  data_path / 'im'
     
@@ -94,8 +94,8 @@ def get_data_rec(raw_data_dir) -> dict:
         data_paths = {}
         for date in data_dates:
             date_path = data_path / date
-            data_paths[date] = [d for d in date_path.glob("NVI??/D*")] # Each mouse has one day experiment
-        print("All dates: ")
+            data_paths[date] = [d for d in date_path.glob('NVI??/D*')] # Each mouse has one day experiment
+        print('All dates: ')
         print(data_dates)
         date_input = input('Which date? ')
         if date_input in data_dates:

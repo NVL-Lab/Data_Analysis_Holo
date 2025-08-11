@@ -1,6 +1,6 @@
 __author__ = 'Nuria'
 
-# __author__ = ("Nuria", "John Doe")
+# __author__ = ('Nuria', 'John Doe')
 
 import pandas as pd
 import numpy as np
@@ -8,7 +8,7 @@ import numpy as np
 from pathlib import Path
 from typing import Tuple, Optional
 
-from preprocess_suite2p import process_1_session_suite2p_offline
+from preprocess.preprocess_suite2p import process_1_session_suite2p_offline
 
 
 def run_all_suite2p_local(df: pd.DataFrame, default_path: Path, folder_save: Path, folder_raw: Path, frame_rate:float):
@@ -32,6 +32,6 @@ def run_all_suite2p_local(df: pd.DataFrame, default_path: Path, folder_save: Pat
                              str(folder_raw_experiment / 'im' / row['BMI_im'] / row['BMI_im_voltage_file'])]
         size_recordings = []
         for folder in folder_im_paths:
-            size_recordings.append(len(list(folder.glob(f'*.tif'))))
+            size_recordings.append(len(list(Path(folder).glob(f'*.tif'))))
         process_1_session_suite2p_offline(default_path, folder_suite2p, folder_im_paths, voltage_rec_paths, size_recordings, frame_rate)
 

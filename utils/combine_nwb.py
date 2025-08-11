@@ -17,10 +17,10 @@ def list_nwb_paths(folder_nwb: Path, row: pd.Series) -> list:
     :param row: row: row series from the dataframe with all the animals / sessions
     :return: list of nwbfiles_path"""
 
-    return [f"{folder_nwb / row.mice_name / row.mice_name}_{row.session_date}_holostim_seq.nwb",
-            f"{folder_nwb / row.mice_name / row.mice_name}_{row.session_date}_baseline.nwb",
-            f"{folder_nwb / row.mice_name / row.mice_name}_{row.session_date}_pretrain.nwb",
-            f"{folder_nwb / row.mice_name / row.mice_name}_{row.session_date}_bmi.nwb"]
+    return [f'{folder_nwb / row.mice_name / row.mice_name}_{row.session_date}_holostim_seq.nwb',
+            f'{folder_nwb / row.mice_name / row.mice_name}_{row.session_date}_baseline.nwb',
+            f'{folder_nwb / row.mice_name / row.mice_name}_{row.session_date}_pretrain.nwb',
+            f'{folder_nwb / row.mice_name / row.mice_name}_{row.session_date}_bmi.nwb']
 
 
 def combine_indices_nwb(nwb_filenames: list[str], attribute: str) -> Tuple[np.array, int]:
@@ -34,7 +34,7 @@ def combine_indices_nwb(nwb_filenames: list[str], attribute: str) -> Tuple[np.ar
     indices = [[]]
     len_recording = 0
     for path_filename in nwb_filenames:
-        io = NWBHDF5IO(Path(path_filename), mode="r")
+        io = NWBHDF5IO(Path(path_filename), mode='r')
         nwbfile = io.read()
         if attribute in nwbfile.acquisition.keys():
             indices.append(nwbfile.acquisition[attribute].timestamps + len_recording)
