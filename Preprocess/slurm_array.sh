@@ -13,4 +13,4 @@
 module load Anaconda3/4.4.0
 source activate suite2p_env
 
-python run_suite2p.py
+python run_suite2p.py --batch_index ${SLURM_ARRAY_TASK_ID}
