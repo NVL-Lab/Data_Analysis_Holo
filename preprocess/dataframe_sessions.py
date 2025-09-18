@@ -78,22 +78,22 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
                 "BMI": act.bmi_frames,
                 "pretrain": act.bmi_frames  
             }
-            # Initialize columns with None
+            # Initialize data columns with None, Flags with False
             for category in category_map.values():
                 if f'Flag_session_more_tif_{category}' not in ret:
                     ret[f'Flag_session_more_tif_{category}'] = []
                 ret[category].append(None)
                 ret[f'{category}_voltage_file'].append(None)  # Updated voltage naming
-                ret[f'Flag_{category}'].append(None)  # Flagging for multiple files
-                ret[f'Flag_session_more_tif_{category}'].append(None)
-                ret[f'Flag_{category}_voltage_file'].append(None)
+                ret[f'Flag_{category}'].append(False)  # Flagging for multiple files
+                ret[f'Flag_session_more_tif_{category}'].append(False)
+                ret[f'Flag_{category}_voltage_file'].append(False)
 
 
             ret['Pretrain_im'].append(None)
-            ret['Flag_Pretrain_im'].append(None)
+            ret['Flag_Pretrain_im'].append(False)
             ret['Pretrain_im_voltage_file'].append(None)
-            ret['Flag_session_more_tif_pretrain'].append(None)
-            ret[f'Flag_Pretrain_im_voltage_file'].append(None)
+            ret['Flag_session_more_tif_pretrain'].append(False)
+            ret[f'Flag_Pretrain_im_voltage_file'].append(False)
             # Iterate over session directory
             for file_name in os.listdir(dir_files):
                 file_path = dir_files / file_name
@@ -106,31 +106,31 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
                         for key, category in category_map.items():
                             
                             if not any(key in subfolder for subfolder in im_subfolders):
-                                    ret[f'Flag_{category}'][-1] = str(session_path)
+                                    ret[f'Flag_{category}'][-1] = True
                             if im_subfolder.startswith(key):
                                 if not os.listdir(im_subfolder_path):
-                                    ret[f'Flag_{category}'][-1] = str(session_path)
-                                    ret[f'Flag_session_more_tif_{category}'][-1] = str(session_path)
+                                    ret[f'Flag_{category}'][-1] = True
+                                    ret[f'Flag_session_more_tif_{category}'][-1] = True
                                     continue 
                                 im_files = [subfolder for subfolder in os.listdir(im_subfolder_path) if subfolder.startswith(f"{key}_")]
                                 parsed_folder_name = f"{key}/{im_files[0]}" if im_files else None
                                 # Check if multiple files exist
                                 if len(im_files) > 1 or not im_files:
-                                    ret[f'Flag_{category}'][-1] = str(session_path)  # Flag session
+                                    ret[f'Flag_{category}'][-1] = True  # Flag session
                                     ret[category][-1] = None  # No single file assigned
-                                    ret[f'Flag_session_more_tif_{category}'][-1] = None
+                                    ret[f'Flag_session_more_tif_{category}'][-1] = False
 
                                 elif len(im_files) == 1:
                                     ret[category][-1] = parsed_folder_name  
-                                    ret[f'Flag_{category}'][-1] = None  
+                                    ret[f'Flag_{category}'][-1] = False  
                                     parsed_folder = im_subfolder_path / im_files[0]
                                     num_tiff_files = sum(1 for file in os.listdir(parsed_folder) if file.endswith(".tif"))
 
-                                    ret[f'Flag_session_more_tif_{category}'][-1] = str(session_path) if num_tiff_files > tiff_limits[key] else None
+                                    ret[f'Flag_session_more_tif_{category}'][-1] = True if num_tiff_files > tiff_limits[key] else False
                                 else:
                                     ret[category][-1] = None
-                                    ret[f'Flag_{category}'][-1] = None  # No flag needed
-                                    ret[f'Flag_session_more_tif_{category}'][-1] = None 
+                                    ret[f'Flag_{category}'][-1] = False  # No flag needed
+                                    ret[f'Flag_session_more_tif_{category}'][-1] = False 
 
                                 # Look for voltage recording file inside the correct subfolder
                                 if im_files:
@@ -140,43 +140,43 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
 
                                     if voltage_file_path.exists():
                                         ret[f'{category}_voltage_file'][-1] = voltage_file_pattern
-                                        ret[f'Flag_{category}_voltage_file'][-1]=None
+                                        ret[f'Flag_{category}_voltage_file'][-1] = False
                                     else:
                                         ret[f'{category}_voltage_file'][-1] = None
-                                        ret[f'Flag_{category}_voltage_file'][-1]= str(session_path)
+                                        ret[f'Flag_{category}_voltage_file'][-1] = True
                         
 
                         # Checking if "_pretrain" is missing in any subfolder names
                         if not any("_pretrain" in subfolder for subfolder in im_subfolders):
-                            ret['Flag_Pretrain_im'][-1] = str(session_path)                    
+                            ret['Flag_Pretrain_im'][-1] = True                    
 
                         if "_pretrain" in im_subfolder:
                                 if not os.listdir(im_subfolder_path):
-                                    ret['Flag_Pretrain_im'][-1] = str(session_path)
-                                    ret['Flag_session_more_tif_pretrain'][-1] = str(session_path)
+                                    ret['Flag_Pretrain_im'][-1] = True
+                                    ret['Flag_session_more_tif_pretrain'][-1] = True
                                     continue 
                                 im_files = [subfolder for subfolder in os.listdir(im_subfolder_path) if "_pretrain" in subfolder]
                                 parsed_folder_name = f"{im_subfolder}/{im_files[0]}" if im_files else None
 
                                 if len(im_files) > 1 or not im_files:
-                                    ret['Flag_Pretrain_im'][-1] = str(session_path)
+                                    ret['Flag_Pretrain_im'][-1] = True
                                     ret['Pretrain_im'][-1] = None
-                                    ret['Flag_session_more_tif_pretrain'][-1] = None
+                                    ret['Flag_session_more_tif_pretrain'][-1] = False
 
                                 elif len(im_files) == 1:
                                     ret['Pretrain_im'][-1] = parsed_folder_name
-                                    ret['Flag_Pretrain_im'][-1] = None
+                                    ret['Flag_Pretrain_im'][-1] = False
                                     parsed_folder = im_subfolder_path / im_files[0]
                                     num_tiff_files = sum(1 for file in os.listdir(parsed_folder) if file.endswith(".tif"))
                                     if num_tiff_files > tiff_limits['pretrain']:
-                                        ret['Flag_session_more_tif_pretrain'][-1] = str(session_path)
+                                        ret['Flag_session_more_tif_pretrain'][-1] = True
                                     else:
-                                        ret['Flag_session_more_tif_pretrain'][-1] = None
+                                        ret['Flag_session_more_tif_pretrain'][-1] = False
 
                                 else:
                                     ret['Pretrain_im'][-1] = None
-                                    ret['Flag_Pretrain_im'][-1] = None   
-                                    ret['Flag_session_more_tif_pretrain'][-1] = None
+                                    ret['Flag_Pretrain_im'][-1] = False   
+                                    ret['Flag_session_more_tif_pretrain'][-1] = False
 
                                 if im_files:
                                     full_subfolder_name = im_files[0]
@@ -185,10 +185,10 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
                                     
                                     if pretrain_voltage_file_path.exists():
                                         ret['Pretrain_im_voltage_file'][-1] = pretrain_voltage_file_pattern
-                                        ret[f'Flag_Pretrain_im_voltage_file'][-1]=None
+                                        ret[f'Flag_Pretrain_im_voltage_file'][-1] = False
                                     else:
                                         ret['Pretrain_im_voltage_file'][-1] = None
-                                        ret[f'Flag_Pretrain_im_voltage_file'][-1] = str(session_path)
+                                        ret[f'Flag_Pretrain_im_voltage_file'][-1] = True
 
 
             # Additional file processing
@@ -243,28 +243,28 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
             ret['Roi_mat_file'].extend(roi_mat_files)
             ret['BMI_target_mat_file'].append(bmitarget_files[0] if len(bmitarget_files) == 1 else None)
             ret['Baseline_mat_file'].append(baseline_files[0] if len(baseline_files) == 1 else None)
-            ret['Flag_BaselineOnline'].append(session_path if len(baseline_files) > 1 else None)
-            ret['Flag_BMITarget'].append(session_path if len(bmitarget_files) > 1 else None)
+            ret['Flag_BaselineOnline'].append(True if len(baseline_files) > 1 else False)
+            ret['Flag_BMITarget'].append(True if len(bmitarget_files) > 1 else False)
             ret['Target_calibration_mat_file'].append(target_files[0] if len(target_files) == 1 else None)
-            ret['Flag_target_calibration'].append(session_path if len(target_files) > 1 else None)
+            ret['Flag_target_calibration'].append(True if len(target_files) > 1 else False)
             ret['Holostim_seq_mat_file'].append(holostim_seq_files[0] if len(holostim_seq_files) == 1 else None)
             if not holostim_seq_files or not bmi_files or not baseline_files:  
-                ret['Flag_experiment_mat_file'].append(str(session_path)) 
+                ret['Flag_experiment_mat_file'].append(True) 
             else:
-                ret['Flag_experiment_mat_file'].append(None)
-            ret['Flag_Holostim_seq_mat_file'].append(session_path if len(holostim_seq_files) > 1 else None)
+                ret['Flag_experiment_mat_file'].append(False)
+            ret['Flag_Holostim_seq_mat_file'].append(True if len(holostim_seq_files) > 1 else False)
             ret['MainProt_mat_file'].append(mainProt_files[0] if len(mainProt_files) == 1 else None)
-            ret['Flag_MainProt_mat_file'].append(session_path if len(mainProt_files) > 1 else None)
+            ret['Flag_MainProt_mat_file'].append(True if len(mainProt_files) > 1 else False)
             
             if len(bmi_files) == 2:
                 bmi_files.sort(key=lambda x: x[1])
                 ret['Pretrain_mat_file'].append(bmi_files[0][0])
                 ret['BMI_mat_file'].append(bmi_files[1][0])
-                ret['Flag_BMI'].append(None)
+                ret['Flag_BMI'].append(False)
             else:
                 ret['Pretrain_mat_file'].append(None)
                 ret['BMI_mat_file'].append(None)
-                ret['Flag_BMI'].append(session_path if bmi_files else None)
+                ret['Flag_BMI'].append(True if bmi_files else False)
 
     # Normalize DataFrame column lengths
     df = pd.DataFrame.from_dict(ret, orient='index').transpose()
