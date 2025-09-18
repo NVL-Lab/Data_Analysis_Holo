@@ -269,11 +269,11 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
     # Normalize DataFrame column lengths
     df = pd.DataFrame.from_dict(ret, orient='index').transpose()
     df = df.loc[:, list(ret.keys())]  # Ensure column order matches append order
-    return df[list(df.columns[:6]) + sorted(df.columns[6:], key=str.casefold)]
+    return df[list(df.columns[:6]) + sorted(df.columns[6:], key=str.casefold)].rename(columns=str.lower)
 
 
 
-# df = get_sessions_df('hE2_rew')
+# cd df = get_sessions_df('hE2_rew')
 
 # df.to_parquet('df_holobmi.parquet', engine='pyarrow', index=False)
 
