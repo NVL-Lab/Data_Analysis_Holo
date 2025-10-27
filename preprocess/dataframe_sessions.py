@@ -300,42 +300,7 @@ _Feedback_BMI_Holostim = {
 
     ]
 }
-_No_Reward_Pretrain = {
-    
-    'NVI17': [
-        '191211/NVI17/D26',
-        '191213/NVI17/D28',
-        
-    ],
-    'NVI20': [
-        '191211/NVI20/D26',
-        '191213/NVI20/D28',
-        
-    ],
-    'NVI21': [
-        
-    ],
-    'NVI22': [
-        '191211/NVI22/D26',
-    ]
-}
-_BMI = {
-    
-    'NVI17': [
-        '191212/NVI17/D27',
-        
-    ],
-    'NVI20': [
-        '191212/NVI20/D27',
-        
-    ],
-    'NVI21': [
-        
-    ],
-    'NVI22': [
-        '191212/NVI22/D27',
-    ]
-}
+
 
 def get_all_sessions() -> pd.DataFrame:
     """ function to get a df with all sessions"""
@@ -467,20 +432,20 @@ def get_sessions_df(experiment_type: Optional[str]=None) -> pd.DataFrame:
                         bmi_files.append((file_name, datetime.strptime(match.group(1), '%y%m%dT%H%M%S')))
 
             ret['roi'].extend(roi_files)
-            ret['BMI_target'].append(bmitarget_files[0] if len(bmitarget_files) == 1 else None)
-            ret['Flag_BMITarget'].append(session_path if len(bmitarget_files) > 1 else None)
+            ret['bmi_target'].append(bmitarget_files[0] if len(bmitarget_files) == 1 else None)
+            ret['flag_bmi_target'].append(session_path if len(bmitarget_files) > 1 else None)
             ret['target_calibration'].append(target_files[0] if len(target_files) == 1 else None)
-            ret['Flag_target_calibration'].append(session_path if len(target_files) > 1 else None)
+            ret['flag_target_calibration'].append(session_path if len(target_files) > 1 else None)
 
             if len(bmi_files) == 2:
                 bmi_files.sort(key=lambda x: x[1])
-                ret['Pretrain_BMI'].append(bmi_files[0][0])
-                ret['BMI'].append(bmi_files[1][0])
-                ret['Flag_BMI'].append(None)
+                ret['pretrain_bmi'].append(bmi_files[0][0])
+                ret['bmi'].append(bmi_files[1][0])
+                ret['flag_bmi'].append(None)
             else:
-                ret['Pretrain_BMI'].append(None)
-                ret['BMI'].append(None)
-                ret['Flag_BMI'].append(session_path if bmi_files else None)
+                ret['pretrain_nmi'].append(None)
+                ret['nmi'].append(None)
+                ret['flag_bmi'].append(session_path if bmi_files else None)
 
     # Normalize DataFrame column lengths
     max_len = max(len(v) for v in ret.values())
