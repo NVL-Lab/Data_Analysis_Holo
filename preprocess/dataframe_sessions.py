@@ -9,7 +9,7 @@ import numpy as np
 from pathlib import Path
 from datetime import datetime
 import re
-from session_paths import _hE2_rew,_hE2_norew,_hE2_rew_fb,_hE3_rew,_No_Reward_Pretrain,_randrew,_randrew_fb,_BMI
+from preprocess.session_paths import _hE2_rew,_hE2_norew,_hE2_rew_fb,_hE3_rew,_No_Reward_Pretrain,_randrew,_randrew_fb,_BMI
 from utils.analysis_constants import AnalysisConstants as act
 
 # def get_all_sessions() -> pd.DataFrame:
@@ -39,6 +39,13 @@ from utils.analysis_constants import AnalysisConstants as act
 
 
 
+def get_all_sessions() -> pd.DataFrame:
+    df = pd.DataFrame()
+    experiment_types = {'hE2_rew', 'hE2_norew', 'hE3_rew', 'randrew'}
+    for experiment in experiment_types:
+        df_new = get_sessions_df(experiment)
+        df = pd.concat([df, df_new], ignore_index=True)
+    return df
 
 
 def get_sessions_df(experiment_type: str) -> pd.DataFrame:
@@ -276,7 +283,8 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
 
 
 
-# cd df = get_sessions_df('hE2_rew')
+# cd df_hE2_rew = get_sessions_df('hE2_rew')
+# df_hE2_norew = get_sessions_df('hE2_norew')
 
 # df.to_parquet('df_holobmi.parquet', engine='pyarrow', index=False)
 
