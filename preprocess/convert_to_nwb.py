@@ -112,6 +112,10 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
 
     for index, row in df_sessions.iterrows():
         # TODO: Add behavior!
+        # If any flag represents the session can not be process normally
+        flag_cols = df_sessions.filter(like='Flag').columns
+        if row[flag_cols].any():
+            continue
 
         folder_nwb_mice = folder_nwb / row.mice_name
         if not Path(folder_nwb_mice).exists():
