@@ -46,8 +46,8 @@ def get_all_sessions(folder_save: Path) -> pd.DataFrame:
     for experiment in experiment_types:
         df_new = get_sessions_df(experiment)
         df = pd.concat([df, df_new], ignore_index=True)
-    df.to_csv(folder_save / 'df_holobmi.csv', index=False)
-    return df
+    df.to_csv(folder_save+'/df_holobmi.csv', index=False)
+    return df   
 
 def get_sessions_df(experiment_type: str) -> pd.DataFrame:
     experiment_dict = {
