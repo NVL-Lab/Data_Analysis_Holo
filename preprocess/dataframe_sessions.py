@@ -39,7 +39,15 @@ from utils.analysis_constants import AnalysisConstants as act
 
 
 
-
+def get_all_sessions(folder_save: Path) -> pd.DataFrame:
+    """ function to put all the experiment types in a dataframe"""
+    df = pd.DataFrame()
+    experiment_types = {'hE2_rew', 'hE2_norew', 'hE3_rew', 'randrew'}
+    for experiment in experiment_types:
+        df_new = get_sessions_df(experiment)
+        df = pd.concat([df, df_new], ignore_index=True)
+    df.to_csv(folder_save / 'df_holobmi.csv', index=False)
+    return df
 
 def get_sessions_df(experiment_type: str) -> pd.DataFrame:
     experiment_dict = {
