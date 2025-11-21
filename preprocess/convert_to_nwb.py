@@ -127,7 +127,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
 
         print('Holo_sequential: initiating and creating the nwbfile')
         # convert data and open file
-        folder_holo_seq_im = Path(folder_raw) / row.session_path / 'im' / row.Holostim_seq_im
+        folder_holo_seq_im = Path(folder_raw) / row.session_path / 'im' / row.holostim_seq_im
         nwbfile_holograph_seq_path = f'{folder_nwb_mice / row.mice_name}_{row.session_date}_holostim_seq.nwb'
         convert_bruker_images_to_nwb(folder_holo_seq_im, microscope, nwbfile_holograph_seq_path)
         io_holographic_seq = NWBHDF5IO(nwbfile_holograph_seq_path, mode='a')
@@ -142,10 +142,10 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
 
         print('Holo_sequential: retrieving online data')
         # Save the neural data that was store in the mat file
-        holostim_seq_data = loadmat(folder_raw / row.session_path / row.Holostim_seq_mat_file)['holoActivity']
+        holostim_seq_data = loadmat(folder_raw / row.session_path / row.holostim_seq_mat_file)['holoActivity']
         # select holodata that is not nan and transpose to have time x neurons
         holostim_seq_data = holostim_seq_data[:, ~np.isnan(np.sum(holostim_seq_data, 0))].T
-        voltage_recording = folder_holo_seq_im / row.Holostim_seq_im_voltage_file
+        voltage_recording = folder_holo_seq_im / row.holostim_seq_im_voltage_file
         # retrieve the peaks from the voltage recording
         _, _, peaks_I1, _, _, _, _, peaks_I6, peaks_I7, comments_holo_neural = (
             svr.obtain_peaks_voltage(voltage_recording, frame_rate, size_of_recording))
@@ -178,8 +178,8 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
 
         print('Holo_sequential: holographic stim data')
         # obtain the holographic metadata and store it
-        tree_xml = ET.parse(folder_raw / row.session_path / row.XML_holostim_seq)
-        tree_gpl = ET.parse(folder_raw / row.session_path / row.HoloMask_gpl_file)
+        tree_xml = ET.parse(folder_raw / row.session_path / row.xml_holostim_seq)
+        tree_gpl = ET.parse(folder_raw / row.session_path / row.holomask_gpl_file)
         stim_point, delay, duration, spiral_rev, spiral_size, loc_x, loc_y, loc_z = (
             retrieve_holographic_point_data(tree_xml, tree_gpl))
 
@@ -252,7 +252,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
 
         print('Baseline: initiating and creating the nwbfile')
         # convert data and open file
-        folder_baseline_im = Path(folder_raw) / row.session_path / 'im' / row.Baseline_im
+        folder_baseline_im = Path(folder_raw) / row.session_path / 'im' / row.baseline_im
         nwbfile_baseline_path = f'{folder_nwb_mice / row.mice_name}_{row.session_date}_baseline.nwb'
         convert_bruker_images_to_nwb(folder_baseline_im, nwbfile_baseline_path)
         io_baseline = NWBHDF5IO(nwbfile_baseline_path, mode='a')
@@ -263,9 +263,9 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
         nwbfile_baseline.add_device(microscope)
 
         print('Baseline: retrieving online data')
-        baseline_data = loadmat(folder_raw / row.session_path / row.Baseline_mat_file)['baseActivity']
+        baseline_data = loadmat(folder_raw / row.session_path / row.baseline_mat_file)['baseActivity']
         baseline_data = baseline_data[:, ~np.isnan(np.sum(baseline_data, 0))].T
-        voltage_recording = folder_baseline_im / row.Baseline_im_voltage_file
+        voltage_recording = folder_baseline_im / row.baseline_im_voltage_file
         _, _, peaks_I1, _, _, peaks_I4, _, _, peaks_I7, comments_baseline = (
             svr.obtain_peaks_voltage(voltage_recording, frame_rate, size_of_recording))
         baseline_indices_for_4 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I4)
@@ -304,7 +304,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
 
         print('Pretrain: initiating and creating the nwbfile')
         # convert data and open file
-        folder_pretrain_im = Path(folder_raw) / row.session_path / 'im' / row.Pretrain_im
+        folder_pretrain_im = Path(folder_raw) / row.session_path / 'im' / row.pretrain_im
         nwbfile_pretrain_path = f'{folder_nwb_mice / row.mice_name}_{row.session_date}_pretrain.nwb'
         convert_bruker_images_to_nwb(folder_pretrain_im, nwbfile_pretrain_path)
         io_pretrain = NWBHDF5IO(nwbfile_pretrain_path, mode='a')
@@ -315,13 +315,13 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
         nwbfile_pretrain.add_device(microscope)
 
         print('Pretrain: retrieving online data')
-        pretrain_mat = loadmat(folder_raw / row.session_path / row.Pretrain_mat_file)['data']
+        pretrain_mat = loadmat(folder_raw / row.session_path / row.pretrain_mat_file)['data']
         pretrain_data = pretrain_mat['bmiAct'].item()
         pretrain_data = pretrain_data[:, :np.where(~np.isnan(pretrain_data).all(axis=0))[0][-1]].T
-        pretrain_calibration_mat = loadmat(folder_raw / row.session_path / row.Target_calibration_mat_file)
-        pretrain_rois_mat = loadmat(folder_raw / row.session_path / row.Roi_mat_file)['roi_data']
+        pretrain_calibration_mat = loadmat(folder_raw / row.session_path / row.target_calibration_mat_file)
+        pretrain_rois_mat = loadmat(folder_raw / row.session_path / row.roi_mat_file)['roi_data']
         ensemble_indices = pretrain_calibration_mat['E_base_sel'].flatten()
-        voltage_recording = folder_pretrain_im / row.Pretrain_im_voltage_file
+        voltage_recording = folder_pretrain_im / row.pretrain_im_voltage_file
         _, _, peaks_I1, _, _, peaks_I4, peaks_I5, peaks_I6, peaks_I7, comments_pretrain = (
             svr.obtain_peaks_voltage(voltage_recording, frame_rate, size_of_recording))
         pretrain_indices_for_4 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I4)
@@ -383,8 +383,8 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
             nwbfile_pretrain.add_device(holo_spatial_light_modulator)
 
             print('Pretrain: holographic stim data')
-            tree_xml = ET.parse(folder_raw / row.session_path / row.XML_ensemble)
-            tree_gpl = ET.parse(folder_raw / row.session_path / row.GPL_ensemble)
+            tree_xml = ET.parse(folder_raw / row.session_path / row.xml_ensemble)
+            tree_gpl = ET.parse(folder_raw / row.session_path / row.gpl_ensemble)
             stim_point, delay, duration, spiral_rev, spiral_size, loc_x, loc_y, loc_z = (
                 retrieve_holographic_point_data(tree_xml, tree_gpl))
 
@@ -532,7 +532,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
 
         print('BMI: initiating and creating the nwbfile')
         # convert data and open file
-        folder_bmi_im = Path(folder_raw) / row.session_path / 'im' / row.BMI_im
+        folder_bmi_im = Path(folder_raw) / row.session_path / 'im' / row.bmi_im
         nwbfile_bmi_path = f'{folder_nwb_mice / row.mice_name}_{row.session_date}_bmi.nwb'
         convert_bruker_images_to_nwb(folder_bmi_im, nwbfile_bmi_path)
         io_bmi = NWBHDF5IO(nwbfile_bmi_path, mode='a')
@@ -543,10 +543,10 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
         nwbfile_bmi.add_device(microscope)
 
         print('BMI: retrieving online data')
-        bmi_mat = loadmat(folder_raw / row.session_path / row.BMI_mat_file)['data']
+        bmi_mat = loadmat(folder_raw / row.session_path / row.bmi_mat_file)['data']
         bmi_data = bmi_mat['bmiAct'].item()
         bmi_data = bmi_data[:, :np.where(~np.isnan(bmi_data).all(axis=0))[0][-1]].T
-        voltage_recording = folder_bmi_im / row.BMI_im_voltage_file
+        voltage_recording = folder_bmi_im / row.bmi_im_voltage_file
         _, _, peaks_I1, _, _, peaks_I4, peaks_I5, _, peaks_I7, comments_bmi = (
             svr.obtain_peaks_voltage(voltage_recording, frame_rate, size_of_recording))
         bmi_indices_for_4 = svr.obtain_indices_per_peaks(peaks_I1, peaks_I4)
