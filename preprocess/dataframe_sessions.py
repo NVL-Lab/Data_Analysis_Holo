@@ -46,7 +46,7 @@ def get_all_sessions(folder_save: Path) -> pd.DataFrame:
     for experiment in experiment_types:
         df_new = get_sessions_df(experiment)
         df = pd.concat([df, df_new], ignore_index=True)
-    df.to_csv(folder_save+'/df_holobmi.csv', index=False)
+    df.to_csv(folder_save / 'df_holobmi.csv', index=False)
     return df   
 
 def get_sessions_df(experiment_type: str) -> pd.DataFrame:
@@ -232,7 +232,7 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
                 elif file_name.startswith('workspace'):
                     ret['workspace_mat_file'].append(str(file_name))
                 elif file_name.startswith('holoMask'):
-                    ret['holoMask_gpl_file'].append(str(file_name))
+                    ret['holomask_gpl_file'].append(str(file_name))
                 elif file_name.startswith('mainProt'):
                     # ret['MainProt_file'].append(str(file_name))
                     mainProt_files.append(str(file_name))
@@ -283,11 +283,5 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
     return df[list(df.columns[:6]) + sorted(df.columns[6:], key=str.casefold)]
 
 
-
-# cd df = get_sessions_df('hE2_rew')
-
-# df.to_parquet('df_holobmi.parquet', engine='pyarrow', index=False)
-
-# df.to_csv('df_holobmi.csv', index=False)
 
 
