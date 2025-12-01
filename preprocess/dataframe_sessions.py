@@ -79,9 +79,9 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
 
             dir_files = folder_raw / session_path
             category_map = {
-                'baseline': 'Baseline_im',
-                'BMI': 'BMI_im',
-                'holostim_seq': 'Holostim_seq_im'  # Updated naming
+                'baseline': 'baseline_im',
+                'BMI': 'bmi_im',
+                'holostim_seq': 'holostim_seq_im'  # Updated naming
             }
             tiff_limits = {
                 "holostim_seq": act.seq_holo_frames,
