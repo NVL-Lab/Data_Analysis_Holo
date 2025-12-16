@@ -3,7 +3,12 @@ import cv2
 
 
 # open file
-cap = cv2.VideoCapture('video_2019-09-30T13_29_11.avi')
+base_path = Path(
+        '/data/project/nvl_lab/HoloBMI/Behavior/191003/NVI13/base'
+)
+
+video_path = base_path / 'video_2019-10-03T16_03_57.avi'
+cap = cv2.VideoCapture(video_path)
 
 # get FPS of input video
 fps = cap.get(cv2.CAP_PROP_FPS)
