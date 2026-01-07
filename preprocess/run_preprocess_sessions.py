@@ -23,7 +23,7 @@ def run_all_suite2p_local(df_path: str, folder_save: str, folder_raw: str, defau
     folder_process = Path(folder_save).resolve(strict=True) / 'process'
     folder_raw = Path(folder_raw).resolve(strict=True)
 
-    for row in pd.read_parquet(df_path).itertuples():
+    for _, row in pd.read_parquet(df_path).iterrows():
         folder_raw_experiment = folder_raw / row['session_path']
         folder_processed_experiment = folder_process / row['session_path']
         folder_suite2p = folder_processed_experiment / 'suite2p' / 'plane0'
