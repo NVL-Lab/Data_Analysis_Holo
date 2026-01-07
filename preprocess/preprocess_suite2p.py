@@ -47,17 +47,43 @@ def obtain_bad_frames_from_voltage_rec(voltage_rec_paths: List[str], frame_rate:
 
 def prepare_ops_1st_pass(default_path: Path, ops_path: Path, bad_frames: np.array = np.empty(0)) -> dict:
     """ Function to modify the default ops file before 1st pass"""
-    aux_ops = np.load(Path(default_path) / 'default_ops.npy', allow_pickle=True)
-    ops = aux_ops.take(0)
+    #aux_ops = np.load(Path(default_path) / 'default_ops.npy', allow_pickle=True)
+    #ops = aux_ops.take(0)
     # ops['nwb_series'] = 'TwoPhotonSeries'
     # ops['nwb_file'] = nwb_filepath
+
+    ops = suite2p.default_ops()
+    # Main (dataset-specific) settings
+    # Important
+    ops['do_bidiphase'] = True
+    ops['tau'] = 1.5  # -N
+    ops['fs'] = 29.7
+
+    # File input/output settings
+    ops['move_bin'] = True
+
+    # Registration settings
+    ops['keep_movie_raw'] = True
+    ops['smooth_sigma'] = 1.0
+    ops['two_step_registration'] = True
+
+    # ROI detection settings
+    ops['spatial_scale'] = 0
+    ops['threshold_scaling'] = 0.7
+    ops['high_pass'] = 100
+
+    # Cellpose - Anatomical (not in use)
+    ops['anatomical_only'] = 0
+    ops['diameter'] = 0
+    ops['flow_threshold'] = 1.0
+
     if len(bad_frames) > 0:
         ops['badframes'] = bad_frames
     np.save(ops_path, ops, allow_pickle=True)
     return ops
 
 
-def process_1_session_suite2p_offline(default_path: Path, folder_suite2p: Path, folder_im_paths: List[str],
+def process_1_session_suite2p_offline(default_path: Path, folder_processed_experiment: Path, folder_im_paths: List[str],
                                       voltage_rec_paths: List[str], size_recordings: List[int],
                                       frame_rate: float):
     """ Function to process suite2p offline with a tone of info needed
@@ -73,11 +99,12 @@ def process_1_session_suite2p_offline(default_path: Path, folder_suite2p: Path, 
 
     db = {
         'data_path': folder_im_paths,
-        'save_path0': str(folder_suite2p),
-        'fast_disk': str(folder_suite2p)
+        'save_path0': str(folder_processed_experiment),
+        'fast_disk': str(folder_processed_experiment)
     }
+    #folder_suite2p = folder_processed_experiment / 'suite2p' / 'plane0'
     bad_frames, _ = obtain_bad_frames_from_voltage_rec(voltage_rec_paths, frame_rate, size_recordings)
     np.save(Path(folder_im_paths[0]) / 'bad_frames.npy', bad_frames)
-    ops_1st_pass = prepare_ops_1st_pass(default_path, folder_suite2p / 'ops_before_1st.npy', bad_frames)
+    ops_1st_pass = prepare_ops_1st_pass(default_path, folder_processed_experiment / 'ops_before_1st.npy', bad_frames)
     ops_after_1st_pass = suite2p.run_s2p(ops_1st_pass, db)
-    np.save(folder_suite2p / 'ops_after_1st_pass.npy', ops_after_1st_pass, allow_pickle=True)
+    np.save(folder_processed_experiment / 'ops_after_1st_pass.npy', ops_after_1st_pass, allow_pickle=True)
