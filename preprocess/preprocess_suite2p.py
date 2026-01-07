@@ -8,7 +8,8 @@ import numpy as np
 from pathlib import Path
 from typing import List, Tuple, Optional
 
-from suite2p.run_s2p import run_s2p
+import suite2p
+#from suite2p.run_s2p import run_s2p
 
 from preprocess import syncronize_voltage_rec as svr
 
@@ -78,5 +79,5 @@ def process_1_session_suite2p_offline(default_path: Path, folder_suite2p: Path, 
     bad_frames, _ = obtain_bad_frames_from_voltage_rec(voltage_rec_paths, frame_rate, size_recordings)
     np.save(Path(folder_im_paths[0]) / 'bad_frames.npy', bad_frames)
     ops_1st_pass = prepare_ops_1st_pass(default_path, folder_suite2p / 'ops_before_1st.npy', bad_frames)
-    ops_after_1st_pass = run_s2p(ops_1st_pass, db)
+    ops_after_1st_pass = suite2p.run_s2p(ops_1st_pass, db)
     np.save(folder_suite2p / 'ops_after_1st_pass.npy', ops_after_1st_pass, allow_pickle=True)

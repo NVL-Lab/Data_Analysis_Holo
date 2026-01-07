@@ -13,8 +13,17 @@ from preprocess.preprocess_suite2p import process_1_session_suite2p_offline
 
 def run_all_suite2p_local(df: pd.DataFrame, default_path: Path, folder_save: Path, folder_raw: Path, frame_rate:float):
     """ function to run and process all experiments with suite2p locally"""
-    folder_save = Path(folder_save)
-    for index, row in df.iterrows():
+
+    # df: /home/sgurgua4/Documents/project/nvl_lab/Data_Analysis_Holo/holobmi_df.parquet
+    # default_path: path to default rois
+    # folder_save: /data/project/nvl_lab/HoloBMI/
+    # folder_raw: /data/project/nvl_lab/HoloBMI/Raw
+    # frame_rate: 29.752
+
+    #folder_save = Path(folder_save)
+    df = pd.read_parquet(df)
+    for row in df.itertuples():
+        print(row)
         folder_process = folder_save / 'process'
         folder_raw_experiment = Path(folder_raw) / row['session_path']
         folder_processed_experiment = Path(folder_process) / row['session_path']
@@ -33,5 +42,8 @@ def run_all_suite2p_local(df: pd.DataFrame, default_path: Path, folder_save: Pat
         size_recordings = []
         for folder in folder_im_paths:
             size_recordings.append(len(list(Path(folder).glob(f'*.tif'))))
-        process_1_session_suite2p_offline(default_path, folder_suite2p, folder_im_paths, voltage_rec_paths, size_recordings, frame_rate)
+        print(len(folder_im_paths))
+        print(len(voltage_rec_paths))
+        exit()
+        #process_1_session_suite2p_offline(default_path, folder_suite2p, folder_im_paths, voltage_rec_paths, size_recordings, frame_rate)
 
