@@ -107,4 +107,4 @@ def process_1_session_suite2p_offline(default_path: Path, folder_processed_exper
     #np.save(Path(folder_im_paths[0]) / 'bad_frames.npy', bad_frames)
     ops_1st_pass = prepare_ops_1st_pass(default_path, folder_processed_experiment / 'ops_before_1st.npy', bad_frames)
     ops_after_1st_pass = suite2p.run_s2p(ops_1st_pass, db)
-    #np.save(folder_processed_experiment / 'ops_after_1st_pass.npy', ops_after_1st_pass, allow_pickle=True)
+    np.save(folder_processed_experiment / 'ops_after_1st_pass.npy', ops_after_1st_pass, allow_pickle=True)
