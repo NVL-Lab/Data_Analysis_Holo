@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 from typing import Tuple, Optional
 
-from preprocess.preprocess_suite2p import process_1_session_suite2p_offline
+from preprocess_suite2p import process_1_session_suite2p_offline
 
 def process_single_session(row_index: int, df_path: str, folder_save: str, folder_raw: str, default_path: Path, frame_rate:float):
     # df: /home/sgurgua4/Documents/project/nvl_lab/Data_Analysis_Holo/holobmi_df.parquet

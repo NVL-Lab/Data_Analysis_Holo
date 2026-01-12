@@ -11,7 +11,7 @@ from typing import List, Tuple, Optional
 import suite2p
 #from suite2p.run_s2p import run_s2p
 
-from preprocess import syncronize_voltage_rec as svr
+import syncronize_voltage_rec as svr
 
 
 def obtain_bad_frames_from_voltage_rec(voltage_rec_paths: List[str], frame_rate: float,

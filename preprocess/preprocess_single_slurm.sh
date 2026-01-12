@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=suite2p_holo_batch             ### Name of the job
+#SBATCH --job-name=suite2p_holo_batch1             ### Name of the job
 #SBATCH --nodes=1                       ### Number of Nodes
 #SBATCH --ntasks=1                     ### Number of Tasks
 #SBATCH --cpus-per-task=1               ### Number of Tasks per CPU
@@ -14,8 +14,4 @@ module load Anaconda3/2023.07-2
 conda activate rois
 
 ### Runs the script in parallel
-for ((i=0; i<"$1"; i++));
-do
-  srun --nodes=1 --ntasks=1 python -c "from run_preprocess_sessions import process_single_session; process_single_session('$i','$2','$3','$4','$5','$6')" &
-done
-wait
+srun --nodes=1 --ntasks=1 python -c "from run_preprocess_sessions import process_single_session; process_single_session('$1','$2','$3','$4','$5','$6')" &
