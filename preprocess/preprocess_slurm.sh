@@ -14,8 +14,8 @@ module load Anaconda3/2023.07-2
 conda activate rois
 
 ### Runs the script in parallel
-for ((i=0; i<"$1"; i++));
-do
-  srun --nodes=1 --ntasks=1 python -c "from run_preprocess_sessions import process_single_session; process_single_session('$i','$2','$3','$4','$5','$6')" &
+for ((i="$1"; i<"$2"; i++)); do
+  #srun --nodes=1 --ntasks=1 python -c "from run_preprocess_sessions import process_single_session; process_single_session('$i','$2','$3','$4','$5','$6')" &
+  srun --nodes=1 --ntasks=1 python /home/sgurgua4/Documents/project/nvl_lab/Data_Analysis_Holo/preprocess/run_preprocess_sessions "$i" "$3" "$4" "$5" "$6" "$7" &
 done
 wait
