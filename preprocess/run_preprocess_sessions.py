@@ -60,12 +60,12 @@ def run_all_suite2p(df_path: str, folder_save: str, folder_raw: str, default_pat
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run suite2p')
-    parser.add_argument('row_index', type=int, required=True, help='row of dataframe')
-    parser.add_argument('df_path', type=Path, required=True, help='path to dataframe')
-    parser.add_argument('folder_save', type=Path, required=True, help='path to save folder')
-    parser.add_argument('folder_raw', type=Path, required=True, help='path to raw folder')
-    parser.add_argument('default_path', type=Path, required=True, help='path to default folder')
-    parser.add_argument('frame_rate', type=float, required=True, help='frame rate at which recording was gathered')
+    parser.add_argument('row_index', type=int, help='row of dataframe')
+    parser.add_argument('df_path', type=Path, help='path to dataframe')
+    parser.add_argument('folder_save', type=Path, help='path to save folder')
+    parser.add_argument('folder_raw', type=Path, help='path to raw folder')
+    parser.add_argument('default_path', type=Path, help='path to default folder')
+    parser.add_argument('frame_rate', type=float, help='frame rate at which recording was gathered')
 
     args = parser.parse_args()
     process_single_session(args.row_index, args.df_path, args.folder_save, args.folder_raw, args.default_path, args.frame_rate)

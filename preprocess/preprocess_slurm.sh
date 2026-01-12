@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=suite2p_holo_batch             ### Name of the job
 #SBATCH --nodes=1                       ### Number of Nodes
-#SBATCH --ntasks=1                     ### Number of Tasks
+#SBATCH --ntasks=2                     ### Number of Tasks
 #SBATCH --cpus-per-task=1               ### Number of Tasks per CPU
 #SBATCH --mem=96G                        ### Memory required, 4 gigabyte
 #SBATCH --partition=medium            ### Cheaha Partition
@@ -16,6 +16,6 @@ conda activate rois
 ### Runs the script in parallel
 for ((i="$1"; i<"$2"; i++)); do
   #srun --nodes=1 --ntasks=1 python -c "from run_preprocess_sessions import process_single_session; process_single_session('$i','$2','$3','$4','$5','$6')" &
-  srun --nodes=1 --ntasks=1 python /home/sgurgua4/Documents/project/nvl_lab/Data_Analysis_Holo/preprocess/run_preprocess_sessions "$i" "$3" "$4" "$5" "$6" "$7" &
+  srun --nodes=1 --ntasks=1 python /home/sgurgua4/Documents/project/nvl_lab/Data_Analysis_Holo/preprocess/run_preprocess_sessions.py "$i" "$3" "$4" "$5" "$6" "$7" &
 done
 wait
