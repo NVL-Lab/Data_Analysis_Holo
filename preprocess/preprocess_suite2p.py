@@ -63,6 +63,7 @@ def prepare_ops_1st_pass(default_path: Path, ops_path: Path, bad_frames: np.arra
     ops['move_bin'] = True
 
     # Registration settings
+    ops['use_gpu'] = True
     ops['keep_movie_raw'] = True
     ops['smooth_sigma'] = 1.0
     ops['two_step_registration'] = True
