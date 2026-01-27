@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Tuple, Optional
 
 from preprocess_suite2p import process_1_session_suite2p_offline
+import subprocess
 
 def get_filters() -> dict:
     return {
@@ -57,8 +58,7 @@ def run_all_suite2p(indexes, df_path: str, folder_save: str, folder_raw: str, de
     if slurm:
         script_dir = 'preprocess_slurm.sh'
         #output = subprocess.check_output(['sbatch', script_dir, row_count, df_path, folder_save, folder_raw, default_path, frame_rate], text=True)
-        #output = subprocess.check_output(['sbatch', script_dir, *map(str, indexes)], text=True)
-        output = subprocess.check_output(['echo', *map(str, indexes)], text=True)
+        output = subprocess.check_output(['sbatch', script_dir, *map(str, indexes)], text=True)
         print('SLURM response: ', output)
     else:
         row_count = pd.read_parquet(df_path).shape[0]
@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     df = pd.read_parquet(args.df_path).reset_index(drop=True)
-    if args.row_index() == -1:
+    if args.row_index == -1:
         filters = get_filters()
         for label in filters:
             df = df[df[label] == filters[label]]
