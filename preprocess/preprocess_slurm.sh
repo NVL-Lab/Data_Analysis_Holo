@@ -19,9 +19,16 @@ module load cuDNN/8.9.2.26-CUDA-12.2.0
 module load Anaconda3/2023.07-2
 conda activate rois
 
+### Allocating variables
+df_dir="/home/sgurgua4/Documents/project/nvl_lab/Data_Analysis_Holo/holobmi_df.parquet"
+default_path=""
+folder_save="/data/project/nvl_lab/HoloBMI/"
+folder_raw="/data/project/nvl_lab/HoloBMI/Raw"
+frame_rate=29.752
+indexes=("$@")
+
 ### Runs the script in parallel
-for ((i="$1"; i<"$2"; i++)); do
-  #srun --nodes=1 --ntasks=1 python -c "from run_preprocess_sessions import process_single_session; process_single_session('$i','$2','$3','$4','$5','$6')" &
-  srun --nodes=1 --ntasks=1 python /home/sgurgua4/Documents/project/nvl_lab/Data_Analysis_Holo/preprocess/run_preprocess_sessions.py "$i" "$3" "$4" "$5" "$6" "$7" &
+for i in "${indexes[@]}"; do
+  srun --nodes=1 --ntasks=1 python /home/sgurgua4/Documents/project/nvl_lab/Data_Analysis_Holo/preprocess/run_preprocess_sessions.py "$i" "$df_dir" "$default_path" "$folder_save" "$folder_raw" "$frame_rate" &
 done
 wait
