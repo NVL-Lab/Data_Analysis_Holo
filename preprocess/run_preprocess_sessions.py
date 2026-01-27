@@ -25,7 +25,7 @@ def process_single_session(row_index: int, df_path: str, folder_save: str, folde
     # folder_raw: /data/project/nvl_lab/HoloBMI/Raw
     # frame_rate: 29.752
 
-    df = pd.read_parquet(df_path)
+    df = pd.read_parquet(df_path).reset_index(drop=True)
     row = df.iloc[row_index]
 
     folder_processed_experiment = Path(folder_save).resolve(strict=True) / 'process' / row['session_path']

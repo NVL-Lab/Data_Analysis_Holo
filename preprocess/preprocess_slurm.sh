@@ -21,14 +21,14 @@ conda activate rois
 
 ### Allocating variables
 df_dir="/home/sgurgua4/Documents/project/nvl_lab/Data_Analysis_Holo/holobmi_df.parquet"
-default_path=""
 folder_save="/data/project/nvl_lab/HoloBMI/"
 folder_raw="/data/project/nvl_lab/HoloBMI/Raw"
+default_path=""
 frame_rate=29.752
 indexes=("$@")
 
 ### Runs the script in parallel
 for i in "${indexes[@]}"; do
-  srun --nodes=1 --ntasks=1 python /home/sgurgua4/Documents/project/nvl_lab/Data_Analysis_Holo/preprocess/run_preprocess_sessions.py "$i" "$df_dir" "$default_path" "$folder_save" "$folder_raw" "$frame_rate" &
+  srun --nodes=1 --ntasks=1 python /home/sgurgua4/Documents/project/nvl_lab/Data_Analysis_Holo/preprocess/run_preprocess_sessions.py "$i" "$df_dir" "$folder_save" "$folder_raw" "$default_path" "$frame_rate" &
 done
 wait
