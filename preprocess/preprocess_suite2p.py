@@ -38,9 +38,11 @@ def obtain_bad_frames_from_voltage_rec(voltage_rec_paths: List[str], frame_rate:
     stim_index = np.concatenate(indices)
     bad_frames_index = np.unique(np.concatenate([stim_index - 1, stim_index, stim_index + 1])).astype(int)
     bad_frames_bool = np.zeros(len_recording, dtype=bool)
+
     if len(bad_frames_index) > 0:
         bad_frames_index.sort()
-        bad_frames_bool[bad_frames_index] = 1
+        bad_frames_bool[bad_frames_index] = True
+
     return bad_frames_index, bad_frames_bool
 
 
