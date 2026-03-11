@@ -8,8 +8,7 @@ from typing import List, Tuple, Optional
 import suite2p
 
 from utils.suite2p_v1_config import *
-import preprocess.syncronize_voltage_rec as svr
-#import syncronize_voltage_rec as svr
+from preprocess import syncronize_voltage_rec as svr
 from preprocess.preprocess_suite2p import obtain_bad_frames_from_voltage_rec
 
 def get_settings(default_settings_dir, settings = suite2p.default_settings()) -> dict:

@@ -7,9 +7,11 @@
 #SBATCH --gres=gpu:1                ### Number of GPUs
 #SBATCH --mem=128G                        ### Memory required, 4 gigabyte
 #SBATCH --partition=amperenodes            ### Cheaha Partition : amperenodes-medium
-#SBATCH --time=48:00:00                 ### Estimated Time of Completion
+#SBATCH --time=12:00:00                 ### Estimated Time of Completion #48
 #SBATCH --output=/home/sgurgua4/Documents/project/nvl_lab/data_analysis_holo_logs/%x_%j.out              ### Slurm Output file, %x is job name, %j is job i
 #SBATCH --error=/home/sgurgua4/Documents/project/nvl_lab/data_analysis_holo_logs/%x_%j.err               ### Slurm Error file, %x is job name, %j is job id
+
+SECONDS=0
 
 ### Loading the required CUDA and cuDNN modules
 module load CUDA/12.2.0

@@ -136,6 +136,43 @@ These lines tell the SLURM job scheduler how to run your job.
 
 ---
 
+# Run suite2p (v >= 1.0.0.1) via slurm
+
+## Activate Suite2p Conda Environment
+
+Look at lab-wiki for how to work with suite2p and conda
+
+## Clone Repository
+
+Can be done via https or the app.
+Should be cloned outside of the nvl_lab shared drive
+
+## Alter Filters
+
+Function get_filters() in run_preprocess_batch.py gives a dictionary with the corresponding dataframe header and values you wish to run slurm on
+It is used to find the rows of information that match
+Alter it based on what you would like to run and save
+
+## Alter suite2p settings
+
+Script utils/suite2p_v1_config.py contains function get_suite2p_holo_settings() that contains the settings used for suite2p 
+Change and add according to what you may need, Suite2p's github file suite2p/parameters.py has all possible parameters 
+
+## Slurm file
+
+Run run_preprocess_batch.py
+
+`python run_preprocess_batch.py -1 <directory_to_parquet_file_with_experiment_data> <save_directory> <directory_where_raw_experiment data is> <frame_rate_of_experiment> <slurm_file_directory>
+
+While in Data_Analysis_Holo/ 
+`python run_preprocess_batch.py -1 holobmi_df.parquet <save_directory_in_personal_disk> /data/project/nvl_lab/HoloBMI/Raw 29.752 utils/preprocess_slurm.sh 
+
+The frame_rate is for the HoloBMI experiment 
+The -1 can be replaced by a whole number and the script will run the corresponding dataframe row, however, it will not be run via slurm
+
+
+---
+
 **Note:** Pass these in the command prompt.
 
 ### `scontrol`

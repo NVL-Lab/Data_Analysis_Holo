@@ -14,7 +14,7 @@ import subprocess
 def get_filters() -> dict:
     return {
         'session_date': '190930',
-        'mice_name': ['NVI13','NVI16']
+        'mice_name': 'NVI12'#['NVI13','NVI16']
     }
 
 def run_suite2p_df_batch(filter_indexes: list, df_dir: str, folder_save: str, folder_raw: str, frame_rate: float, slurm_file_dir: str = '', default_path: str = ''):

@@ -32,9 +32,9 @@ def get_suite2p_holo_settings():
 
     # General settings
     settings['torch_device'] = 'cuda'
-    settings['tau'] = 1.5 # 1.
+    #settings['tau'] = 1.5 # 1.
     settings['fs'] = 29.752 # HoloBMI 
-    settings['diameter'] = [22., 22.] # [12., 12.]
+    #settings['diameter'] = [22., 22.] # [12., 12.]
     
     # Pipeline steps to run (All are default)
     settings['run']['do_registration'] = 1
@@ -50,17 +50,17 @@ def get_suite2p_holo_settings():
     # Registration settings
     settings['registration']['do_bidiphase'] = True # False
     settings['registration']['bidiphase'] = 0
-    settings['registration']['smooth_sigma'] = 1. # 1.15
+    #settings['registration']['smooth_sigma'] = 1. # 1.15
     settings['registration']['two_step_registration'] = True # db['keep_movie_raw'] needs to be True
 
     # ROI Detection settings
     settings['detection']['algorithm'] = 'sparsery'
     settings['detection']['highpass_time'] = 100
-    settings['detection']['threshold_scaling'] = .7 # 1.
+    #settings['detection']['threshold_scaling'] = .7 # 1.
     settings['detection']['sparsery_settings']['spatial_scale'] = 0
 
     # Cell classification
-    settings['classification']['use_builtin_classifier'] = True #False
+    #settings['classification']['use_builtin_classifier'] = True #False
     settings['classification']['preclassify'] = 0.5 #1.
 
     return settings
