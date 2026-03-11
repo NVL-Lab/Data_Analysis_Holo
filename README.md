@@ -162,12 +162,14 @@ Change and add according to what you may need, Suite2p's github file suite2p/par
 
 Run run_preprocess_batch.py
 
-`python run_preprocess_batch.py -1 <directory_to_parquet_file_with_experiment_data> <save_directory> <directory_where_raw_experiment data is> <frame_rate_of_experiment> <slurm_file_directory>
+`python run_preprocess_batch.py -1 <directory_to_parquet_file_with_experiment_data> <save_directory> <directory_where_raw_experiment data is> <frame_rate_of_experiment> <slurm_file_directory>`
 
 While in Data_Analysis_Holo/ 
-`python run_preprocess_batch.py -1 holobmi_df.parquet <save_directory_in_personal_disk> /data/project/nvl_lab/HoloBMI/Raw 29.752 utils/preprocess_slurm.sh 
 
-The frame_rate is for the HoloBMI experiment 
+`python run_preprocess_batch.py -1 holobmi_df.parquet <save_directory_in_personal_disk> /data/project/nvl_lab/HoloBMI/Raw 29.752 utils/preprocess_slurm.sh`
+
+The frame_rate is for the HoloBMI experiment.
+
 The -1 can be replaced by a whole number and the script will run the corresponding dataframe row, however, it will not be run via slurm
 
 
