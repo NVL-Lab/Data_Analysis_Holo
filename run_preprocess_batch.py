@@ -13,8 +13,8 @@ import subprocess
 
 def get_filters() -> dict:
     return {
-        'session_date': '190930',
-        'mice_name': 'NVI12'#['NVI13','NVI16']
+        'session_date': '191004',
+        #'mice_name': ['NVI13','NVI16']
     }
 
 def run_suite2p_df_batch(filter_indexes: list, df_dir: str, folder_save: str, folder_raw: str, frame_rate: float, slurm_file_dir: str = '', default_path: str = ''):
@@ -52,6 +52,12 @@ if __name__ == '__main__':
             else:
                 raise TypeError('Column values are of incorrect type')
 
+        df_flagged = df[df.filter(like='Flag').notna().any(axis=1)]
+        print('**The following datasets are flagged***')
+        print(df_flagged)
+
+        # Uncomment to not run flagged datasets
+        #df = df[df.filter(like='Flag').isna().all(axis=1)]
         filter_indexes = df.index
         print(df)
         print(filter_indexes)
