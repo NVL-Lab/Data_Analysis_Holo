@@ -13,7 +13,7 @@ import subprocess
 
 def get_filters() -> dict:
     return {
-        'session_date': '191004',
+        'session_date': '191005',
         #'mice_name': ['NVI13','NVI16']
     }
 
@@ -53,12 +53,13 @@ if __name__ == '__main__':
                 raise TypeError('Column values are of incorrect type')
 
         df_flagged = df[df.filter(like='Flag').notna().any(axis=1)]
-        print('**The following datasets are flagged***')
+        print('**The following datasets are flagged**')
         print(df_flagged)
 
         # Uncomment to not run flagged datasets
         #df = df[df.filter(like='Flag').isna().all(axis=1)]
         filter_indexes = df.index
+        print('**The following datasets will be ran**')
         print(df)
         print(filter_indexes)
 
