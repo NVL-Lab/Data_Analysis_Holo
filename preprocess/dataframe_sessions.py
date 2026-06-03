@@ -9,7 +9,7 @@ import numpy as np
 from pathlib import Path
 from datetime import datetime
 import re
-from session_paths import _hE2_rew,_hE2_norew,_hE2_rew_fb,_hE3_rew,_No_Reward_Pretrain,_randrew,_randrew_fb,_BMI
+from preprocess.session_paths import _hE2_rew,_hE2_norew,_hE2_rew_fb,_hE3_rew,_No_Reward_Pretrain,_randrew,_randrew_fb,_BMI
 from utils.analysis_constants import AnalysisConstants as act
 
 # def get_all_sessions() -> pd.DataFrame:
@@ -39,14 +39,15 @@ from utils.analysis_constants import AnalysisConstants as act
 
 
 
-def get_all_sessions(folder_save: Path) -> pd.DataFrame:
+def get_all_sessions(folder_save: str = '') -> pd.DataFrame:
     """ function to put all the experiment types in a dataframe"""
     df = pd.DataFrame()
-    experiment_types = {'hE2_rew', 'hE2_norew', 'hE3_rew', 'randrew'}
+    experiment_types = ['hE2_rew', 'hE2_norew', 'hE3_rew', 'randrew']
     for experiment in experiment_types:
         df_new = get_sessions_df(experiment)
         df = pd.concat([df, df_new], ignore_index=True)
-    df.to_csv(folder_save / 'df_holobmi.csv', index=False)
+    if folder_save:
+        df.to_csv(folder_save / 'df_holobmi.csv', index=False)
     return df   
 
 def get_sessions_df(experiment_type: str) -> pd.DataFrame:
@@ -60,8 +61,10 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
         'No_Reward_Pretrain': _No_Reward_Pretrain,
         'BMI': _BMI
     }
-    
-    if experiment_type not in experiment_dict:
+  
+    if experiment_type is None:
+        return get_all_sessions()
+    elif experiment_type not in experiment_dict:
         raise ValueError(f'Invalid experiment type: {experiment_type}. Choose from {", ".join(experiment_dict.keys())}')
 
     ret = collections.defaultdict(list)

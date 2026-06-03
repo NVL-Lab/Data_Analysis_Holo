@@ -2,12 +2,14 @@ __author__ = ('Nuria', 'Saul')
 
 import pandas as pd
 import numpy as np
+import argparse
 
 from pathlib import Path
 from typing import Tuple, Optional
 
 from preprocess.preprocess_suite2p import process_1_session_suite2p_offline
 from preprocess.preprocess_suite2p_v1 import process_single_session
+from utils.params import get_suite2p_params
 
 def run_all_suite2p_local(df: pd.DataFrame, default_path: Path, folder_save: Path, folder_raw: Path, frame_rate:float):
     """ function to run and process all experiments with suite2p locally"""
@@ -61,3 +63,11 @@ def run_suite2p_local(row_index: int, df_path: str, folder_save: str, folder_raw
         size_recordings.append(len(list(Path(folder).glob(f'*.tif'))))
 
     process_single_session(folder_im_paths, voltage_rec_paths, size_recordings, frame_rate, suite2p_save_path, default_path)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Run suite2p')
+    parser.add_argument('row_index', type=int, help='row of dataframe')
+    args = parser.parse_args()
+
+    suite2p_params = get_suite2p_params()
+    run_suite2p_local(args.row_index, suite2p_params['df_dir'], suite2p_params['folder_save'], suite2p_params['folder_raw'], suite2p_params['frame_rate'], suite2p_params['default_path'])

@@ -28,6 +28,17 @@ def run_suite2p_df_batch(filter_indexes: list, df_dir: str, folder_save: str, fo
             run_suite2p_local(i, df_dir, folder_save, folder_raw, default_path, frame_rate)
         print('Local run complete')
 
+def run_nwb_df_batch(filter_indexes: list, df_dir: str, folder_save: str, folder_raw: str, frame_rate: float, slurm_file_dir: str = '', default_path: str = ''):
+    """ function to run and process experiments with suite2p"""
+
+    if slurm_file_dir:
+        output = subprocess.check_output(['sbatch', slurm_file_dir, df_dir, folder_save, folder_raw, str(frame_rate), default_path, *map(str, filter_indexes)], text=True)
+        print('SLURM response: ', output)
+    else:
+        for i in filter_indexes:
+            run_suite2p_local(i, df_dir, folder_save, folder_raw, default_path, frame_rate)
+ 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run suite2p')
     parser.add_argument('row_index', type=int, help='row of dataframe')
