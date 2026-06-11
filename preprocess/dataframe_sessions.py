@@ -311,6 +311,13 @@ def get_sessions(experiment_type: str) -> pd.DataFrame:
     matches = raw_path.glob("[0-9][0-9][0-9][0-9][0-9][0-9]/NVI*/D*")
     sessions = [p for p in matches if p.is_dir()]
 
+    frame_count = {
+        'baseline': act.calibration_frames,
+        'BMI': act.bmi_frames,
+        'holostim_seq': act.seq_holo_frames,
+        'HoloVTA_pretrain': act.bmi_frames
+    }
+
     for session_path in sessions:
         session_date, mouse_id, day_index = session_path.split('/')
 
@@ -324,29 +331,33 @@ def get_sessions(experiment_type: str) -> pd.DataFrame:
             'has_warning': False
         }
 
-        frame_count = {
-            'baseline': act.calibration_frames,
-            'BMI': act.bmi_frames,
-            'holostim_seq': act.seq_holo_frames,
-            'pretrain': act.bmi_frames
-        }
-
         # imaging
-        im_path = raw_path / session_path / 'im'
+        parent_im_path = raw_path / session_path / 'im'
 
-        if not im_path.exists():
+        if not parent_im_path.exists():
             print('wrong')
-            continue
 
-        for experiment in ['baseline', 'BMI', 'holostim_seq']:
-            im_path = Path(im_path / experiment).glob(f'{experiment}_{session_date}T*')
+        for experiment in frame_count:
+            im_path = next(Path(parent_im_path / experiment).glob(f'{experiment}_{session_date}T*'), None)
+            tiff_count = 0
 
-            tiff_count = sum(1 for f in im_path.iterdir() if f.is_file() and f.suffix == '.tif')
+            if im_path:
+                tiff_count = sum(1 for f in im_path.iterdir() if f.is_file() and f.suffix.lower() == '.tif')
+            else:
+                print('no imaging path')
+
             if tiff_count > frame_count[experiment]:
                 print('too many tiff')
+            elif tiff_count == 0:
+                print('no tiff')
 
-            volt_path = im_path.glob()
-            #cont
+            volt_path = im_path.glob(f'{im_path.name}_Cycle00001_VoltageRecording_001.csv')
+
+            if not volt_path:
+                print('no voltage recording')
+
+        # Additional file processing
+        #cont
 
 
 
