@@ -4,8 +4,8 @@ import pandas as pd
 
 def get_suite2p_filters() -> dict:
     return {
-        'session_date': '191006',
-        #'mice_name': ['NVI13','NVI16']
+        'session_date': '191001',
+        'mice_name': ['NVI12']
     }
 
 def get_nwb_filters() -> dict:

@@ -306,12 +306,12 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
         'baseline': act.calibration_frames,
         'BMI': act.bmi_frames,
         'holostim_seq': act.seq_holo_frames,
-        'HoloVTA_pretrain': act.bmi_frames
+        'pretrain': act.bmi_frames # HoloVTA and VTA
     }
 
     sessions = []
     for session_path in session_paths:
-        session_date, mouse_id, day_index = session_path.parts
+        session_date, mouse_id, day_index = session_path.parts[-3:]
 
         row = {
             'mouse_id': mouse_id,
@@ -332,7 +332,11 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
             exit()
 
         for experiment in frame_count:
-            im_path = next(Path(parent_im_path / experiment).glob(f'{experiment}_{session_date}T*'), None)
+            expt_path = next(parent_im_path.glob(f'*{experiment}*'), None)
+            expt_name = expt_path.name   
+
+            im_path = next(Path(parent_im_path / expt_name).glob(f'{expt_name}_{session_date}T*'), None)
+            print(im_path)
             tiff_count = 0
 
             if im_path:
