@@ -302,16 +302,16 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
     else:
         print('Doing all paths')
         #raise ValueError(f'Invalid experiment type: {experiment_type} Choose from {", ".join(act.experiment_types)}')
-
+    
     frame_count = {
         'baseline': act.calibration_frames,
         'BMI': act.bmi_frames,
         'holostim_seq': act.seq_holo_frames,
         'pretrain': act.bmi_frames # HoloVTA and VTA
     }
-
+    
     sessions = []
-    for session_path in session_paths:
+    for session_path in [session_paths[0]]:
         session_date, mouse_id, day_index = session_path.parts[-3:]
 
         row = {
@@ -428,6 +428,7 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
             print('no bmi')
         '''
 
+        sessions.append(row)
     df_sessions = pd.DataFrame(sessions)
 
     return df_sessions
