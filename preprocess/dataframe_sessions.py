@@ -286,6 +286,7 @@ def get_sessions_df(experiment_type: str) -> pd.DataFrame:
     df = df.loc[:, list(ret.keys())]  # Ensure column order matches append order
     return df[list(df.columns[:6]) + sorted(df.columns[6:], key=str.casefold)]
 
+
 def get_sessions(experiment_type: str = None) -> pd.DataFrame:
     raw_path = Path('/data/project/nvl_lab/HoloBMI/Raw')
     matches = raw_path.glob("[0-9][0-9][0-9][0-9][0-9][0-9]/NVI*/D*")
@@ -358,6 +359,50 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
             else:
                 print(f'no voltage recording: {volt_path}')
 
+        files = list(abs_session_path.iterdir())
+        file_patterns = {
+            'roi_mat_file': '*roi',
+            'bot_candidates': '*BOT_c',
+            'bot_ensemble': '*BOT_e',
+            'gpl_candidates': '*GPL_c',
+            'gpl_ensemble': '*GPL_e',
+            'xml_candidates': '*XML_c',
+            'xml_ensemble': '*XML_e',
+            'workspace_mat_file': '*workspace',
+            'holomask_gpl_file': '*holoMask',
+            'xml_holostim_seq': '*seq_single',
+            'strc_mask_mat_file': '*strcMask',
+            'main_prot_mat_file': '*mainProt', # Flag
+            'bmi_target_mat_file': '*BMI_target_info',  # Flag
+            'holostim_seq_mat_file': '*holostim_seq*.mat', # Flag
+            'baseline_mat_file': '*BaselineOnline*.mat', # Flag
+            'target_calibration_mat_file': '*target_calibration', # Flag
+            '_mat_file': '*BMI_online*T*.mat', # Flag
+        }
+
+        for file_name, pattern in file_patterns.items():
+            matches = [f for f in files if f.match(pattern)]
+            match_count = len(matches)
+            if match_count > 1:
+                if file_name == '_mat_file':
+                    if match_count == 2:
+                        matches = sorted(matches)
+                        row[f'pretrain{file_name}'] = matches[0]
+                        row[f'bmi_mat{file_name}'] = matches[1]
+                        row[f'flag_bmi'] = False
+                    else:
+                        print('incorrect bmi_online files')
+                        row[f'flag_bmi'] = True
+                else:
+                    row[f'flag_{file_name}'] = True
+            elif match_count == 1:
+                row[f'flag_{file_name}'] = False
+            else:
+                print('no matches')
+                row[f'flag_{file_name}'] = True
+
+
+        '''
         # Check for flags
         row['roi_mat_file'] = next(abs_session_path.glob('roi*'), None)
         row['bot_candidates'] = next(abs_session_path.glob('BOT_c*'), None)
@@ -381,6 +426,7 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
             row['bmi_mat_file'] = bmi_files[1]
         else:
             print('no bmi')
+        '''
 
     df_sessions = pd.DataFrame(sessions)
 
