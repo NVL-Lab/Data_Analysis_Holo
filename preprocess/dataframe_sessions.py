@@ -309,7 +309,7 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
         'holostim_seq': act.seq_holo_frames,
         'pretrain': act.bmi_frames # HoloVTA and VTA
     }
-    
+
     sessions = []
     for session_path in [session_paths[0]]:
         session_date, mouse_id, day_index = session_path.parts[-3:]
@@ -332,7 +332,37 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
             print(f'no im: {parent_im_path}')
             exit()
 
+        im_files = list(parent_im_path.iterdir())
         for experiment in frame_count:
+            im_path_matches = [f for f in im_files if f.match(f'*{experiment}/{experiment}_{session_date}T*')]
+
+            if len(im_path_matches) != 1:
+                print(f'no im: {experiment}/{experiment}_{session_date}T*')
+                exit()
+
+            im_path = im_path_matches[0]
+            im_path_files = list(im_path.iterdir())
+            tiff_count = sum(1 for f in im_path_files if f.is_file() and f.suffix.lower() == '.tif')
+
+            if tiff_count > frame_count[experiment]:
+                print(tiff_count)
+                print(frame_count[experiment])
+                print('too many tiff')
+                exit()
+            elif tiff_count == 0:
+                print(f'no tiff')
+                exit()
+
+            volt_matches = [f for f in im_path_files if f.match(f'{im_path.name}_Cycle00001_VoltageRecording_001.csv')]
+
+            if len(volt_matches) == 1:
+                row[f'{experiment.lower()}_voltage_file'] = volt_matches[0]
+            else:
+                print(f'no voltage recording')
+
+        '''
+        for experiment in frame_count:
+            #im_matches = [f for f in im_files if f.match(pattern)]
             expt_path = next(parent_im_path.glob(f'*{experiment}*'), None)
             expt_name = expt_path.name   
 
@@ -358,7 +388,7 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
                 row[f'{experiment.lower()}_voltage_file'] = volt_path
             else:
                 print(f'no voltage recording: {volt_path}')
-
+        '''
         files = list(abs_session_path.iterdir())
         file_patterns = {
             'roi_mat_file': '*roi',
