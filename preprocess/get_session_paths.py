@@ -1,6 +1,6 @@
 def get_session_paths() -> dict:
     return {
-        'hE2_rew': {
+        'hE2_rew': [
             '190930/NVI12/D5',
             '191001/NVI12/D6',
             '191003/NVI12/D8',
@@ -83,8 +83,8 @@ def get_session_paths() -> dict:
             '191118/NVI22/D14',
             '191120/NVI22/D16',
             '191122/NVI22/D18',
-        },
-        'hE3_rew': {
+        ],
+        'hE3_rew': [
             '191004/NVI12/D9',
             '191026/NVI12/D26',
             '191028/NVI12/D28',
@@ -110,8 +110,8 @@ def get_session_paths() -> dict:
             '191109/NVI22/D05',
             '191115/NVI22/D11',
             '191121/NVI22/D17',
-        },
-        'hE2_norew': {
+        ],
+        'hE2_norew': [
             '191008/NVI12/D13',
             '191012/NVI12/D17',
             '191027/NVI12/D27',
@@ -137,8 +137,8 @@ def get_session_paths() -> dict:
             '191107/NVI22/D03',
             '191113/NVI22/D09',
             '191119/NVI22/D15',
-        },
-        'randrew': {
+        ],
+        'randrew': [
             '191006/NVI12/D11',
             '191010/NVI12/D15',
             '191014/NVI12/D19',
@@ -184,8 +184,8 @@ def get_session_paths() -> dict:
             '191111/NVI22/D07',
             '191117/NVI22/D13',
             # '191123/NVI22/D19',
-        },
-        'randrew_fb': {
+        ],
+        'randrew_fb': [
             '191124/NVI17/D20',
             '191126/NVI17/D22',
             '191128/NVI17/D24',
@@ -197,8 +197,8 @@ def get_session_paths() -> dict:
             '191124/NVI22/D20',
             '191126/NVI22/D22',
             '191128/NVI22/D24',
-        },
-        'hE2_rew_fb': {
+        ],
+        'hE2_rew_fb': [
             '191125/NVI17/D21',
             '191127/NVI17/D23',
             '191129/NVI17/D25',
@@ -210,8 +210,8 @@ def get_session_paths() -> dict:
             '191125/NVI22/D21',
             '191127/NVI22/D23',
             '191129/NVI17/D25',
-        },
-        'No_Reward_Pretrain': {
+        ],
+        'No_Reward_Pretrain': [
             '191211/NVI17/D26',
             '191213/NVI17/D28',
 
@@ -219,14 +219,14 @@ def get_session_paths() -> dict:
             '191213/NVI20/D28',
 
             '191211/NVI22/D26',
-        },
-        'BMI': {
+        ],
+        'BMI': [
             '191212/NVI17/D27',
 
             '191212/NVI20/D27',
 
             '191212/NVI22/D27',
-        }
+        ]
     }
 
 '''
