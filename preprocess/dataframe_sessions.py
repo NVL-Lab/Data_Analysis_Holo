@@ -360,7 +360,13 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
         for experiment in frame_limits:
             im0_path = [f for f in im_files if f.match(f'*{experiment}*')][0]
             im0_path_files = list(im0_path.iterdir())
-            im_path = [f for f in im0_path_files if f.match(f'*{im0_path.name}_{session_date}T*')][0]
+            im_path_matches = [f for f in im0_path_files if f.match(f'*{im0_path.name}_{session_date}T*')]
+            if len(im_path_matches) == 0:
+                print(f'No {parent_im_path} im path for {experiment}')
+                row['has_error'] = True
+                break
+
+            im_path = im_path_matches[0]
 
             im_path_files = list(im_path.iterdir())
             tiff_count = sum(1 for f in im_path_files if f.is_file() and f.suffix.lower() == '.tif')
@@ -378,6 +384,7 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
                 row[f'{experiment.lower()}_voltage_file'] = volt_matches[0]
             else:
                 print(f'No voltage recording in {im_path} ')
+                row[f'{experiment.lower()}_voltage_file'] = None
                 row['has_warning'] = True
 
         # file searching
@@ -396,28 +403,32 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
                         print(f'Incorrect bmi_online file count in {abs_session_path}')
                         #row[f'flag_bmi'] = True
                         row['has_error'] = True
-                        continue
+                        break
                 else:
                     print(f'Too many matches for {abs_session_path}/{file_name}')
                     #row[f'flag_{file_name}'] = True
                     row['has_warning'] = True
+                    row[file_name] = matches
             elif match_count == 0:
                 print(f'No {abs_session_path}/{file_name}')
                 #row[f'flag_{file_name}'] = True
                 row['has_warning'] = True
-            #else:
-                #print(f'Found {abs_session_path}/{file_name}')
+                row[file_name] = None
+            else:
+                print(f'Found {abs_session_path}/{file_name}')
                 #row[f'flag_{file_name}'] = False
-
-        sessions.append(row)
+                row[file_name] = matches[0]
 
         if row['has_warning']:
             print(f'{session_path} has warnings\n')
         elif row['has_error']:
-            print(f'{session_path} has errors!!\n')
+            print(f'{session_path} has errors and will not be added!!\n')
+            continue
         else:
             print(f'{session_path} is a good dataset!\n')
 
+        sessions.append(row)
+
     df_sessions = pd.DataFrame(sessions)
-    df.to_csv('new_df.csv', index=False)
+    df_sessions.to_csv('new_df.csv', index=False)
     return df_sessions
