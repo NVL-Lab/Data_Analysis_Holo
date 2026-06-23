@@ -3,7 +3,7 @@ __author__ = 'Saul'
 import argparse
 import subprocess
 
-from utils.holo_df_tools import get_data_indexes
+from utils.holobmi_df.holobmi_df_tools import get_data_indexes
 from utils.params import *
 
 if __name__ == '__main__':

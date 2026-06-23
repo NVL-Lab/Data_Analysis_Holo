@@ -291,16 +291,16 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
     raw_path = Path('/data/project/nvl_lab/HoloBMI/Raw')
     matches = raw_path.glob("[0-9][0-9][0-9][0-9][0-9][0-9]/NVI*/D*")
     session_paths = [p for p in matches if p.is_dir()]
+    session_types = get_session_paths()
 
     if experiment_type in act.experiment_types:
-        experiment_session_paths = get_session_paths()[experiment_type]
+        experiment_session_paths = session_types[experiment_type]
         extra_session_paths = set(experiment_session_paths) - set(session_paths)
         if len(extra_session_paths) > 0:
+            print('There are paths not taken into account')
             print(extra_session_paths)
             exit()
         session_paths = experiment_session_paths
-    else:
-        print('Doing all paths')
    
     # some are not the same: baseline, pretrain
     frame_limits = {
@@ -321,30 +321,38 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
         'holomask_gpl_file': '*/holoMask*',
         'xml_holostim_seq': '*seq_single*',
         'strc_mask_mat_file': '*strcMask*',
-        'main_prot_mat_file': '*mainProt*', # Flag
-        'bmi_target_mat_file': '*BMI_target_info*',  # Flag
+        'main_prot_m_file': '*mainProt*.m*', # Flag
+        'bmi_target_mat_file': '*/BMI_target_info*',  # Flag
         'holostim_seq_mat_file': '*holostim_seq*.mat', # Flag
-        'baseline_mat_file': '*BaselineOnline*.mat', # Flag
-        'target_calibration_mat_file': '*target_calibration*.mat', # Flag
-        'mat_file': '*BMI_online*T*.mat', # Flag
+        'baseline_mat_file': '*/BaselineOnline*.mat', # Flag
+        'target_calibration_mat_file': '*/target_calibration*.mat', # Flag
+        'mat_file': '*/BMI_online*T*.mat', # Flag
     }
 
     sessions = []
-    # [session_paths[0]]
+    issues = []
     for session_path in session_paths:
         session_date, mouse_id, day_index = session_path.parts[-3:]
-        if not experiment_type:
-            session_types = get_session_paths()
-            experiment_type = next((k for k, lst in session_types.items() if f'{session_date}/{mouse_id}/{day_index}' in lst), None)
+        session_key = f'{session_date}/{mouse_id}/{day_index}'
+
+        if not experiment_type or session_key not in session_types[experiment_type]:
+            experiment_type = next((k for k, lst in session_types.items() if session_key in lst), None)
 
         row = {
             'mouse_id': mouse_id,
             'session_date': session_date,
             'day_index': day_index,
             'experiment_type': experiment_type,
-            'session_path': session_path,
+            'session_path': session_key,
             'has_error': False,
             'has_warning': False
+        }
+        irow = {
+            'mouse_id': mouse_id,
+            'session_date': session_date,
+            'day_index': day_index,
+            'session_path': session_key,
+            'error_no_im_path': False
         }
 
         # imaging
@@ -354,81 +362,126 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
         if not parent_im_path.exists():
             print(f'No {parent_im_path}')
             row['has_error'] = True
-            continue
+            irow['error_no_im_path'] = True
 
         im_files = list(parent_im_path.iterdir())
         for experiment in frame_limits:
-            im0_path = [f for f in im_files if f.match(f'*{experiment}*')][0]
+            if irow['error_no_im_path']:
+                irow[f'error_no_{experiment.lower()}_im_path'] = True
+                irow[f'error_no_{experiment.lower()}_tiffs'] = True
+                continue
+
+            irow[f'error_no_{experiment.lower()}_im_path'] = False
+            irow[f'error_no_{experiment.lower()}_tiffs'] = False
+                
+            irow[f'warning_excess_{experiment.lower()}_tiffs'] = False
+            irow[f'warning_no_{experiment.lower()}_voltage_file'] = False
+
+            if experiment == 'BMI':
+                im0_path_matches = [f for f in im_files if f.match(f'*/{experiment}')]
+            else:
+                im0_path_matches = [f for f in im_files if f.match(f'*{experiment}*')]
+
+            if len(im0_path_matches) == 0:
+                print(f'No {experiment} in im path')
+                row['has_error'] = True
+                irow[f'error_no_{experiment.lower()}_im_path'] = True
+                irow[f'error_no_{experiment.lower()}_tiffs'] = True
+                irow[f'warning_no_{experiment.lower()}_voltage_file'] = True
+                continue
+
+            im0_path = im0_path_matches[0]
+
             im0_path_files = list(im0_path.iterdir())
             im_path_matches = [f for f in im0_path_files if f.match(f'*{im0_path.name}_{session_date}T*')]
             if len(im_path_matches) == 0:
                 print(f'No {parent_im_path} im path for {experiment}')
                 row['has_error'] = True
-                break
+                irow[f'error_no_{experiment.lower()}_im_path'] = True
+                irow[f'error_no_{experiment.lower()}_tiffs'] = True
+                irow[f'warning_no_{experiment.lower()}_voltage_file'] = True
+                continue
 
             im_path = im_path_matches[0]
+            row[f'{experiment.lower()}_im_path'] = str(Path(*im_path.parts[-3:]))
+            irow[f'{experiment.lower()}_im_path'] = row[f'{experiment.lower()}_im_path']
 
             im_path_files = list(im_path.iterdir())
             tiff_count = sum(1 for f in im_path_files if f.is_file() and f.suffix.lower() == '.tif')
 
             if tiff_count > frame_limits[experiment]:
                 print(f'Too many tiffs in {im_path} for {experiment}')
-                #row['has_warning'] = True
+                row['has_warning'] = True
+                irow[f'warning_excess_{experiment.lower()}_tiffs'] = True
             elif tiff_count == 0:
                 print(f'No tiffs in {im_path}')
-                row['has_warning'] = True
+                row['has_error'] = True
+                irow[f'error_no_{experiment.lower()}_tiffs'] = True
+                #break
 
             volt_matches = [f for f in im_path_files if f.match(f'{im_path.name}_Cycle00001_VoltageRecording_001.csv')]
 
             if len(volt_matches) == 1:
-                row[f'{experiment.lower()}_voltage_file'] = volt_matches[0]
+                row[f'{experiment.lower()}_voltage_file'] = str(Path(*volt_matches[0].parts[-4:]))
             else:
                 print(f'No voltage recording in {im_path} ')
                 row[f'{experiment.lower()}_voltage_file'] = None
+                irow[f'warning_no_{experiment.lower()}_voltage_file'] = True
                 row['has_warning'] = True
+                #break
+        
+        #if row['has_error']:
+        #    print(f'{session_path} has errors and will not be added!!\n')
+        #    continue
 
         # file searching
         files = list(abs_session_path.iterdir())
         for file_name, pattern in file_patterns.items():
             matches = [f for f in files if f.match(pattern)]
             match_count = len(matches)
-            if match_count > 1:
-                if file_name == 'mat_file':
-                    if match_count == 2:
-                        matches = sorted(matches)
-                        row[f'pretrain_{file_name}'] = matches[0]
-                        row[f'bmi_{file_name}'] = matches[1]
-                        #row[f'flag_bmi'] = False
-                    else:
-                        print(f'Incorrect bmi_online file count in {abs_session_path}')
-                        #row[f'flag_bmi'] = True
-                        row['has_error'] = True
-                        break
+            
+            if file_name == 'mat_file':
+                if match_count == 2:
+                    matches = sorted(matches)
+                    row[f'pretrain_{file_name}'] = matches[0].parts[-1]
+                    row[f'bmi_{file_name}'] = matches[1].parts[-1]
+                    irow[f'warning_pretrain_{file_name}'] = False
+                    irow[f'warning_bmi_{file_name}'] = False
                 else:
-                    print(f'Too many matches for {abs_session_path}/{file_name}')
-                    #row[f'flag_{file_name}'] = True
+                    print(f'Incorrect bmi_online file count in {abs_session_path}')
+                    #matches = [str(p) for p in matches]
+                    row[f'pretrain_{file_name}'] = None #matches 
+                    row[f'bmi_{file_name}'] = None #matches
                     row['has_warning'] = True
-                    row[file_name] = matches
-            elif match_count == 0:
-                print(f'No {abs_session_path}/{file_name}')
-                #row[f'flag_{file_name}'] = True
-                row['has_warning'] = True
-                row[file_name] = None
+                    irow[f'warning_pretrain_{file_name}'] = True
+                    irow[f'warning_bmi_{file_name}'] = True
             else:
-                print(f'Found {abs_session_path}/{file_name}')
-                #row[f'flag_{file_name}'] = False
-                row[file_name] = matches[0]
+                if match_count > 1:
+                    #matches = [str(p) for p in matches]
+                    print(f'Too many matches for {abs_session_path}/{file_name}')
+                    row[file_name] = None #matches
+                    row['has_warning'] = True
+                    irow[f'warning_excess_{file_name}'] = True
+                elif match_count == 0:
+                    print(f'No {abs_session_path}/{file_name}')
+                    row[file_name] = None
+                    row['has_warning'] = True
+                    irow[f'warning_no_{file_name}'] = True
+                else:
+                    irow[f'warning_excess_{file_name}'] = False
+                    irow[f'warning_no_{file_name}'] = False
+                    row[file_name] = matches[0].parts[-1]
 
-        if row['has_warning']:
-            print(f'{session_path} has warnings\n')
-        elif row['has_error']:
-            print(f'{session_path} has errors and will not be added!!\n')
-            continue
+        if row['has_warning'] or row['has_error']:
+            print(f'{session_path} has warnings or errors\n')
+            #print(f'{session_path} has errors and will not be added!!\n')
+            issues.append(irow)
         else:
             print(f'{session_path} is a good dataset!\n')
 
         sessions.append(row)
 
     df_sessions = pd.DataFrame(sessions)
-    df_sessions.to_csv('new_df.csv', index=False)
-    return df_sessions
+    df_issues = pd.DataFrame(issues)
+
+    return df_sessions.sort_values(by=['mouse_id', 'session_date']), df_issues.sort_values(by=['mouse_id', 'session_date'])

@@ -21,15 +21,14 @@ def run_all_suite2p_local(df: pd.DataFrame, default_path: Path, folder_save: Pat
         folder_suite2p = folder_processed_experiment / 'suite2p' / 'plane0'
         if not Path(folder_suite2p).exists():
             Path(folder_suite2p).mkdir(parents=True, exist_ok=True)
-        folder_im_paths = [str(folder_raw_experiment / 'im' / row['Holostim_seq_im']),
-                           str(folder_raw_experiment / 'im' / row['Baseline_im']),
-                           str(folder_raw_experiment / 'im' / row['Pretrain_im']),
-                           str(folder_raw_experiment / 'im' / row['BMI_im'])]
-        voltage_rec_paths = [str(folder_raw_experiment / 'im' / row['Holostim_seq_im'] /
-                                 row['Holostim_seq_im_voltage_file']),
-                             str(folder_raw_experiment / 'im' / row['Baseline_im'] / row['Baseline_im_voltage_file']),
-                             str(folder_raw_experiment / 'im' / row['Pretrain_im'] / row['Pretrain_im_voltage_file']),
-                             str(folder_raw_experiment / 'im' / row['BMI_im'] / row['BMI_im_voltage_file'])]
+        folder_im_paths = [str(folder_raw_experiment / row['holostim_seq_im_path']),
+                           str(folder_raw_experiment / row['baseline_im_path']),
+                           str(folder_raw_experiment / row['pretrain_im_path']),
+                           str(folder_raw_experiment / row['bmi_im_path'])]
+        voltage_rec_paths = [str(folder_raw_experiment / row['holostim_seq_voltage_file']),
+                             str(folder_raw_experiment / row['baseline_voltage_file']),
+                             str(folder_raw_experiment / row['pretrain_voltage_file']),
+                             str(folder_raw_experiment / row['bmi_voltage_file'])]
         size_recordings = []
         for folder in folder_im_paths:
             size_recordings.append(len(list(Path(folder).glob(f'*.tif'))))
@@ -47,17 +46,16 @@ def run_suite2p_local(row_index: int, df_path: str, folder_save: str, folder_raw
     suite2p_save_path = Path(folder_save).resolve(strict=True) / 'processed_suite2p' / row['session_path']
     suite2p_save_path.mkdir(parents=True, exist_ok=True)
 
+    folder_raw_experiment = Path(folder_raw) / row['session_path']
     # Stores image and voltage recording paths
-    folder_raw_experiment = Path(folder_raw).resolve(strict=True) / row['session_path'] / 'im'
-    folder_im_paths = [str(folder_raw_experiment / row['Holostim_seq_im']),
-                       str(folder_raw_experiment / row['Baseline_im']),
-                       str(folder_raw_experiment / row['Pretrain_im']),
-                       str(folder_raw_experiment / row['BMI_im'])]
-    voltage_rec_paths = [str(folder_raw_experiment / row['Holostim_seq_im'] / row['Holostim_seq_im_voltage_file']),
-                         str(folder_raw_experiment / row['Baseline_im'] / row['Baseline_im_voltage_file']),
-                         str(folder_raw_experiment / row['Pretrain_im'] / row['Pretrain_im_voltage_file']),
-                         str(folder_raw_experiment / row['BMI_im'] / row['BMI_im_voltage_file'])]
-
+    folder_im_paths = [str(folder_raw_experiment / row['holostim_seq_im_path']),
+                       str(folder_raw_experiment / row['baseline_im_path']),
+                       str(folder_raw_experiment / row['pretrain_im_path']),
+                       str(folder_raw_experiment / row['bmi_im_path'])]
+    voltage_rec_paths = [str(folder_raw_experiment / row['holostim_seq_voltage_file']),
+                         str(folder_raw_experiment / row['baseline_voltage_file']),
+                         str(folder_raw_experiment / row['pretrain_voltage_file']),
+                         str(folder_raw_experiment / row['bmi_voltage_file'])]
     size_recordings = []
     for folder in folder_im_paths:
         size_recordings.append(len(list(Path(folder).glob(f'*.tif'))))
