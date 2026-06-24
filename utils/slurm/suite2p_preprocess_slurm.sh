@@ -8,8 +8,8 @@
 #SBATCH --mem=128G                        ### Memory required, 4 gigabyte
 #SBATCH --partition=amperenodes            ### Cheaha Partition : amperenodes-medium
 #SBATCH --time=12:00:00                 ### Estimated Time of Completion #48
-#SBATCH --output=/gpfs/user/sgurgua4/%x_%j.out              ### Slurm Output file, %x is job name, %j is job i /home/sgurgua4/Documents/project/nvl_lab/holobmi_data/data_analysis_holo_logs/%x_%j.out
-#SBATCH --error=/gpfs/user/sgurgua4/%x_%j.err               ### Slurm Error file, %x is job name, %j is job id
+#SBATCH --output=/home/sgurgua4/Documents/project/nvl_lab/holobmi_data/data_analysis_holo_logs/%x_%j.out              ### Slurm Output file, %x is job name, %j is job id
+#SBATCH --error=/home/sgurgua4/Documents/project/nvl_lab/holobmi_data/data_analysis_holo_logs/%x_%j.err               ### Slurm Error file, %x is job name, %j is job id
 
 SECONDS=0
 
