@@ -17,7 +17,7 @@ from utils.analysis_configuration import AnalysisConfiguration as aconf
 from utils.analysis_constants import AnalysisConstants as act
 from utils.combine_nwb import combine_indices_nwb
 
-from matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from scipy.io import loadmat
 
 def refine_classifier(folder_suite2p: Path, dn_bl: bool = True):
