@@ -18,8 +18,6 @@ from utils.analysis_constants import AnalysisConstants as act
 from utils.combine_nwb import combine_indices_nwb
 
 from scipy.io import loadmat
-from skimage import measure
-
 
 def refine_classifier(folder_suite2p: Path, dn_bool: bool = True):
     """ function to refine the suite2p classifier """
@@ -148,7 +146,10 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     # loads mat data from raw directory
     mat_path = Path(raw_data_path) / dataset_path
     roi_mat = loadmat(mat_path / 'roi_data.mat')
-    bmi_mat = loadmat(mat_path / 'BMI_online190930T152419.mat')
+    #bmi_mat = loadmat(mat_path / f'BMI_online190930T152419.mat')
+    bmi_mat = [f for f in list(mat_path.iterdir()) if f.match('BMI_online*.mat')][-1]
+    print(bmi_mat)
+    exit()
 
     # Gets roi masks from mat files
     roi_mat_data = roi_mat['roi_data'][0,0]
