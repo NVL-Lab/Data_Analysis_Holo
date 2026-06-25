@@ -17,9 +17,10 @@ from utils.analysis_configuration import AnalysisConfiguration as aconf
 from utils.analysis_constants import AnalysisConstants as act
 from utils.combine_nwb import combine_indices_nwb
 
+from matplotlib.pyplot as plt
 from scipy.io import loadmat
 
-def refine_classifier(folder_suite2p: Path, dn_bool: bool = True):
+def refine_classifier(folder_suite2p: Path, dn_bl: bool = True):
     """ function to refine the suite2p classifier """
     neurons = np.load(Path(folder_suite2p) / 'stat.npy', allow_pickle=True)
     is_cell = np.load(Path(folder_suite2p) / 'iscell.npy')
