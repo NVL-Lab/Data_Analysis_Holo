@@ -1,4 +1,4 @@
- __author__ = ('Nuria', 'Saul')
+__author__ = ('Nuria', 'Saul')
 
 import os
 import shutil
