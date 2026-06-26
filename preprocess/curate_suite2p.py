@@ -153,10 +153,12 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     roi_mat_data = roi_mat['roi_data'][0,0]
     roi_bin_cell = roi_mat_data['roi_bin_cell'][0]
     bdata = bmi_mat['bData'][0,0]
-    e1 = bdata['E1_base'][0]
-    e2 = bdata['E2_base'][0]
-    aux_r = [roi_bin_cell[i-1] for i in e1]
-    aux_b = [roi_bin_cell[i-1] for i in e2]
+    e1_mat = bdata['E1_base'][0]-1
+    e2_mat = bdata['E2_base'][0]-1
+    e1 = e1_mat-1
+    e2 = e2_mat-1
+    aux_r = [roi_bin_cell[i] for i in e1]
+    aux_b = [roi_bin_cell[i] for i in e2]
     r = np.sum(aux_r, axis=0) / 2
     b = np.sum(aux_b, axis=0) / 2
 
@@ -180,19 +182,19 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     idxs_false, jaccs_false = get_neuron_indexes(es_idxs, roi_bin_cell, false_cell_indexes, stat)
 
     # creates masks for ensemble neuron matches from suite2p cells and non-cells
-    e1_mask = np.where(np.isin(roi_mask, [x + 1 for x in idxs[:len(e1)] if x is not None]), roi_mask, 0)
-    e2_mask = np.where(np.isin(roi_mask, [x + 1 for x in idxs[len(e1):] if x is not None]), roi_mask, 0)
-    e1_mask_false = np.where(np.isin(roi_mask_false, [x + 1 for x in idxs_false[:len(e1)] if x is not None]), roi_mask_false, 0)
-    e2_mask_false = np.where(np.isin(roi_mask_false, [x + 1 for x in idxs_false[len(e1):] if x is not None]), roi_mask_false, 0)
+    e1_mask = np.where(np.isin(roi_mask, idxs[:len(e1)]), roi_mask, 0)
+    e2_mask = np.where(np.isin(roi_mask, idxs[len(e1):]), roi_mask, 0)
+    e1_mask_false = np.where(np.isin(roi_mask_false, idxs_false[:len(e1)]), roi_mask_false, 0)
+    e2_mask_false = np.where(np.isin(roi_mask_false, idxs_false[len(e1):]), roi_mask_false, 0)
 
     fig, axes = plt.subplots(2, 2)
     axes[0, 0].imshow(np.stack([r, emean_image, e1_mask], axis=-1), cmap='bone')
-    axes[0, 0].set_title(f'e1: {e1}; s2p: {idxs[:len(e1)]}')
+    axes[0, 0].set_title(f'e1: {e1_mat}; s2p: {idxs[:len(e1)]}')
     axes[1, 0].imshow(np.stack([b, emean_image, e2_mask], axis=-1), cmap='bone')
-    axes[1, 0].set_title(f'e2: {e2}; s2p: {idxs[len(e1):]}')
+    axes[1, 0].set_title(f'e2: {e2_mat}; s2p: {idxs[len(e1):]}')
     axes[0, 1].imshow(np.stack([r, emean_image, e1_mask_false], axis=-1), cmap='bone')
-    axes[0, 1].set_title(f'e1: {e1}; s2p_false: {idxs_false[:len(e1)]}')
+    axes[0, 1].set_title(f'e1: {e1_mat}; s2p_false: {idxs_false[:len(e1)]}')
     axes[1, 1].imshow(np.stack([b, emean_image, e2_mask_false], axis=-1), cmap='bone')
-    axes[1, 1].set_title(f'e2: {e2}; s2p_false: {idxs_false[len(e1):]}')
+    axes[1, 1].set_title(f'e2: {e2_mat}; s2p_false: {idxs_false[len(e1):]}')
     plt.show()
     plt.close()
