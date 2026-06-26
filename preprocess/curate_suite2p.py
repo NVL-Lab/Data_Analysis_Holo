@@ -153,8 +153,8 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     roi_mat_data = roi_mat['roi_data'][0,0]
     roi_bin_cell = roi_mat_data['roi_bin_cell'][0]
     bdata = bmi_mat['bData'][0,0]
-    e1_mat = bdata['E1_base'][0]-1
-    e2_mat = bdata['E2_base'][0]-1
+    e1_mat = bdata['E1_base'][0]
+    e2_mat = bdata['E2_base'][0]
     e1 = e1_mat-1
     e2 = e2_mat-1
     aux_r = [roi_bin_cell[i] for i in e1]
