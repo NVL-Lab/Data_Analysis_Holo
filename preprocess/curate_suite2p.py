@@ -182,10 +182,10 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     idxs_false, jaccs_false = get_neuron_indexes(es_idxs, roi_bin_cell, false_cell_indexes, stat)
 
     # creates masks for ensemble neuron matches from suite2p cells and non-cells
-    e1_mask = np.where(np.isin(roi_mask, idxs[:len(e1)]), roi_mask, 0)
-    e2_mask = np.where(np.isin(roi_mask, idxs[len(e1):]), roi_mask, 0)
-    e1_mask_false = np.where(np.isin(roi_mask_false, idxs_false[:len(e1)]), roi_mask_false, 0)
-    e2_mask_false = np.where(np.isin(roi_mask_false, idxs_false[len(e1):]), roi_mask_false, 0)
+    e1_mask = np.where(np.isin(roi_mask, [x + 1 for x in idxs[:len(e1)] if x is not None]), roi_mask, 0)
+    e2_mask = np.where(np.isin(roi_mask, [x + 1 for x in idxs[len(e1):] if x is not None]), roi_mask, 0)
+    e1_mask_false = np.where(np.isin(roi_mask_false, [x + 1 for x in idxs_false[:len(e1)] if x is not None]), roi_mask_false, 0)
+    e2_mask_false = np.where(np.isin(roi_mask_false, [x + 1 for x in idxs_false[len(e1):] if x is not None]), roi_mask_false, 0)
 
     fig, axes = plt.subplots(2, 2)
     axes[0, 0].imshow(np.stack([r, emean_image, e1_mask], axis=-1), cmap='bone')
