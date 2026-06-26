@@ -155,10 +155,10 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     bdata = bmi_mat['bData'][0,0]
     e1 = bdata['E1_base'][0]
     e2 = bdata['E2_base'][0]
-    aux_r = [roi_bin_cell[i] for i in e1]
-    aux_b = [roi_bin_cell[i] for i in e2]
-    r = np.sum(np.stack(aux_r, axis=2), axis=2) / 2 # all values 0.5
-    b = np.sum(np.stack(aux_b, axis=2), axis=2) / 2 # all values 0.5
+    aux_r = [roi_bin_cell[i-1] for i in e1]
+    aux_b = [roi_bin_cell[i-1] for i in e2]
+    r = np.sum(aux_r, axis=0) / 2
+    b = np.sum(aux_b, axis=0) / 2
 
     emean_image = regos['meanImgE']
     # Creates masks for suite2p cells and non-cells
