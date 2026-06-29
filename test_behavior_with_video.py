@@ -373,7 +373,6 @@ def convert_sync_camera_frames(input_video, final_df):
     return output_video
    
 def get_mcb_data(raw_behavior_path: Path, dataset_path: Path) -> pd.DataFrame:
-    #base_path = Path('/data/project/nvl_lab/HoloBMI/Behavior/190930/NVI12/base')
     dataset_path = Path(dataset_path)
     data_path = Path(raw_behavior_path) / dataset_path
 
@@ -396,11 +395,6 @@ def get_mcb_data(raw_behavior_path: Path, dataset_path: Path) -> pd.DataFrame:
     if file_count != 4:
         print('Files are missing')
         exit(1)
-
-    #microscope_data_path = base_path / 'sync_2019-09-30T13_29_11.csv'
-    #camera_data_path = base_path / 'video_timestamp_2019-09-30T13_29_11.csv'
-    #behavior_data_path = base_path / 'NVI12-2019-09-30-132924.txt'
-    #raw_video_path = base_path / 'video_2019-09-30T13_29_11.avi'
 
     microscope_df = pd.read_csv(
         microscope_data_path,
@@ -442,14 +436,14 @@ def get_mcb_data(raw_behavior_path: Path, dataset_path: Path) -> pd.DataFrame:
 
     cmb_sync_df = sync_behavior_to_camera_sync(behavior_df, cm_sync_df)
     print(cmb_sync_df)
-    '''
+
     synced_df, _ = synchronize_two_to_one(camera_df, microscope_df)
     camera_df = map_camera_to_video_time(camera_df)
     print('synced')
     print(synced_df)
     print('camera')
     print(camera_df)
-    '''
+
     cap = cv2.VideoCapture(str(raw_video_path))
     video_duration_sec = len(camera_df) / (cap.get(cv2.CAP_PROP_FPS) * 2)
     cap.release()
