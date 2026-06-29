@@ -231,64 +231,6 @@ def convert_video_to_60fps_with_overlay(
     print(f"Wrote: {output_video}")
     return output_video
 
-# =============================
-# VIDEO CONVERT + OVERLAY
-# =============================
-def convert_video_to_60fps_with_overlay(
-    input_video: Path,
-    final_df: pd.DataFrame
-) -> Path:
-
-    cap = cv2.VideoCapture(str(input_video))
-    in_fps = cap.get(cv2.CAP_PROP_FPS)
-    out_fps = in_fps * 2  # double the framerate
-    width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    output_video = Path.cwd() / f"{input_video.stem}_2x_speed_{int(out_fps)}fps.mp4"
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(str(output_video), fourcc, out_fps, (width, height))
-
-    in_idx = 0
-    valid_len_temp = -1
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        # Use INPUT timeline for alignment with your behavior table
-        # Prefer CAP_PROP_POS_MSEC if available (works better for VFR sources)
-        t_ms = cap.get(cv2.CAP_PROP_POS_MSEC) # increases by 33.3 = (1000 / 30 fps)
-        #if t_ms < 0:  # fallback for some backends
-        #    t_ms = (in_idx / in_fps) * 1000.0
-
-        valid_beh = final_df[final_df['latest_camera_time_ms'] <= t_ms]
-        label = valid_beh.iloc[-1]['behavior_action'] if not valid_beh.empty else None
-        #print(valid_beh)
-        dif = len(valid_beh) - valid_len_temp
-        if dif > 1:
-            dif_beh = valid_beh.iloc[-dif:]['behavior_action']
-            if dif_beh.notna().all():
-                print(f'skipped {dif-1} frame(s)')
-                label = "-".join(valid_beh.iloc[-dif:]['behavior_action'].astype(str))
-        valid_len_temp = len(valid_beh)
-        
-        # Draw on a copy so overlays don't accumulate
-        frame_to_write = frame.copy()
-        if label != None:
-            #print(label)
-            cv2.putText(frame_to_write, f"Behavior: {label}",
-            (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.1, (0, 255, 0), 2, cv2.LINE_AA)
-
-            out.write(frame_to_write)
-        #out.write(frame_to_write)
-        in_idx += 1
-
-    cap.release()
-    out.release()
-    print(f"Wrote: {output_video}")
-    return output_video
-
 def sync_behavior_to_camera_sync(behavior_df, sync_df):
     sync_df['relative_camera_ms'] = sync_df['camera_sync_ms'] - sync_df['camera_sync_ms'].min()
     #cam_leq_indexes = [sync_df[sync_df['relative_camera_ms'] <= row.time].tail(1)['relative_camera_ms'].index[0] for row in behavior_df.itertuples()]
@@ -430,20 +372,36 @@ def convert_sync_camera_frames(input_video, final_df):
     print(f"Wrote: {output_video}")
     return output_video
    
+def get_mcb_data(raw_behavior_path: Path, dataset_path: Path) -> pd.DataFrame:
+    #base_path = Path('/data/project/nvl_lab/HoloBMI/Behavior/190930/NVI12/base')
+    dataset_path = Path(dataset_path)
+    data_path = Path(raw_behavior_path) / dataset_path
 
-# =============================
-# MAIN
-# =============================
-if __name__ == "__main__":
+    data_files = list(data_path.iterdir())
+    file_count = 0
+    for f in data_files:
+        if f.match('*sync*.csv'):
+            microscope_data_path = f
+            file_count += 1
+        elif f.match('*video_timestamp_*.csv'):
+            camera_data_path = f
+            file_count += 1
+        elif f.match(f'*{dataset_path.parts[-2]}*.txt'):
+            behavior_data_path = f
+            file_count += 1
+        elif f.match('*video_*.avi'):
+            raw_video_path = f
+            file_count += 1
 
-    base_path = Path('/data/project/nvl_lab/HoloBMI/Behavior/190930/NVI12/base')
+    if file_count != 4:
+        print('Files are missing')
+        exit(1)
 
-    microscope_data_path = base_path / 'sync_2019-09-30T13_29_11.csv'
-    camera_data_path = base_path / 'video_timestamp_2019-09-30T13_29_11.csv'
-    behavior_data_path = base_path / 'NVI12-2019-09-30-132924.txt'
-    raw_video_path = base_path / 'video_2019-09-30T13_29_11.avi'
+    #microscope_data_path = base_path / 'sync_2019-09-30T13_29_11.csv'
+    #camera_data_path = base_path / 'video_timestamp_2019-09-30T13_29_11.csv'
+    #behavior_data_path = base_path / 'NVI12-2019-09-30-132924.txt'
+    #raw_video_path = base_path / 'video_2019-09-30T13_29_11.avi'
 
-    
     microscope_df = pd.read_csv(
         microscope_data_path,
         sep=r'\s+',
@@ -478,7 +436,7 @@ if __name__ == "__main__":
 
     microscope_df = microscope_df.sort_values('total_ms')
     camera_df = camera_df.sort_values('total_ms')
-    
+
     cm_sync_df = sync_camera_to_microscope(camera_df, microscope_df)
     print(cm_sync_df)
 
@@ -496,15 +454,16 @@ if __name__ == "__main__":
     video_duration_sec = len(camera_df) / (cap.get(cv2.CAP_PROP_FPS) * 2)
     cap.release()
 
-    #print(behavior_df)
-    #behavior_df = map_behavior_to_video_time(behavior_df, video_duration_sec)
-    #final_df = assign_behavior_to_camera(synced_df, camera_df, behavior_df)
-    #print('behavior')
-    #print(behavior_df)
-    #print('final')
-    #print(final_df)
+    print(behavior_df)
+    behavior_df = map_behavior_to_video_time(behavior_df, video_duration_sec)
+    final_df = assign_behavior_to_camera(synced_df, camera_df, behavior_df)
+    print('behavior')
+    print(behavior_df)
+    print('final')
+    print(final_df)
 
     #convert_video_to_60fps_with_overlay(raw_video_path, final_df)
     #convert_sync_camera_frames(raw_video_path, cmb_sync_df)
 
     # SYNC BASED ON CAMERA TO SEE EVERYTHING BETTER
+    return final_df
