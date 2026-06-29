@@ -176,6 +176,63 @@ def assign_behavior_to_camera(synced_df, camera_df, behavior_df):
 # =============================
 # VIDEO CONVERT + OVERLAY
 # =============================
+def convert_video_2x(
+        input_video: Path,
+        final_df: pd.DataFrame
+) -> Path:
+    cap = cv2.VideoCapture(str(input_video))
+    in_fps = cap.get(cv2.CAP_PROP_FPS)
+    out_fps = in_fps * 2  # double the framerate
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    output_video = Path.cwd() / f"{input_video.stem}_2x_speed_{int(out_fps)}fps.mp4"
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(str(output_video), fourcc, out_fps, (width, height))
+
+    in_idx = 0
+    valid_len_temp = -1
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        # Use INPUT timeline for alignment with your behavior table
+        # Prefer CAP_PROP_POS_MSEC if available (works better for VFR sources)
+        t_ms = cap.get(cv2.CAP_PROP_POS_MSEC)  # increases by 33.3 = (1000 / 30 fps)
+        # if t_ms < 0:  # fallback for some backends
+        #    t_ms = (in_idx / in_fps) * 1000.0
+
+        valid_beh = final_df[final_df['latest_camera_time_ms'] <= t_ms]
+        label = valid_beh.iloc[-1]['behavior_action'] if not valid_beh.empty else None
+        # print(valid_beh)
+        dif = len(valid_beh) - valid_len_temp
+        if dif > 1:
+            dif_beh = valid_beh.iloc[-dif:]['behavior_action']
+            if dif_beh.notna().all():
+                print(f'skipped {dif - 1} frame(s)')
+                label = "-".join(valid_beh.iloc[-dif:]['behavior_action'].astype(str))
+        valid_len_temp = len(valid_beh)
+
+        # Draw on a copy so overlays don't accumulate
+        frame_to_write = frame.copy()
+        if label != None:
+            # print(label)
+            cv2.putText(frame_to_write, f"Behavior: {label}",
+                        (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.1, (0, 255, 0), 2, cv2.LINE_AA)
+
+            out.write(frame_to_write)
+        # out.write(frame_to_write)
+        in_idx += 1
+
+    cap.release()
+    out.release()
+    print(f"Wrote: {output_video}")
+    return output_video
+
+# =============================
+# VIDEO CONVERT + OVERLAY
+# =============================
 def convert_video_to_60fps_with_overlay(
     input_video: Path,
     final_df: pd.DataFrame
@@ -391,6 +448,10 @@ def get_mcb_data(raw_behavior_path: Path, dataset_path: Path) -> pd.DataFrame:
         elif f.match('*video_*.avi'):
             raw_video_path = f
             file_count += 1
+    print(microscope_data_path)
+    print(camera_data_path)
+    print(behavior_data_path)
+    print(raw_video_path)
 
     if file_count != 4:
         print('Files are missing')
