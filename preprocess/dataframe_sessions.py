@@ -743,7 +743,7 @@ def get_sessions(raw_path: Path, experiment_type: str = None) -> Tuple[pd.DataFr
 
     # Parallel execution
     with ThreadPoolExecutor(max_workers=16) as pool:
-        results = list(pool.map(process_session(session_to_type, experiment_type, frame_limits, file_patterns), session_paths))
+        results = list(pool.map(lambda p: process_session(p, session_to_type, experiment_type, frame_limits, file_patterns), session_paths))
 
     sessions = []
     issues = []
