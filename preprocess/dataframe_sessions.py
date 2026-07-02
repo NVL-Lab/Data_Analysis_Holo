@@ -1,8 +1,6 @@
-
 import collections
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pandas as pd
 import numpy as np
@@ -11,7 +9,7 @@ from datetime import datetime
 import re
 from preprocess.session_paths import _hE2_rew,_hE2_norew,_hE2_rew_fb,_hE3_rew,_No_Reward_Pretrain,_randrew,_randrew_fb,_BMI
 from utils.analysis_constants import AnalysisConstants as act
-from get_session_paths import get_session_paths
+from preprocess.get_session_paths import get_session_paths
 
 from concurrent.futures import ThreadPoolExecutor
 from fnmatch import fnmatch
@@ -513,23 +511,23 @@ def get_sessions2(experiment_type: str = None) -> pd.DataFrame:
     }
 
     file_patterns = {
-        'roi_mat_file': '*roi_*.mat',
-        'bot_candidates': '*BOT_c*',
-        'bot_ensemble': '*BOT_e*',
-        'gpl_candidates': '*GPL_c*',
-        'gpl_ensemble': '*GPL_e*',
-        'xml_candidates': '*XML_c*',
-        'xml_ensemble': '*XML_e*',
-        'workspace_mat_file': '*workspace*',
-        'holomask_gpl_file': '*/holoMask*',
-        'xml_holostim_seq': '*seq_single*',
-        'strc_mask_mat_file': '*strcMask*',
-        'main_prot_m_file': '*mainProt*.m*',  # Flag
-        'bmi_target_mat_file': '*/BMI_target_info*',  # Flag
-        'holostim_seq_mat_file': '*holostim_seq*.mat',  # Flag
-        'baseline_mat_file': '*/BaselineOnline*.mat',  # Flag
-        'target_calibration_mat_file': '*/target_calibration*.mat',  # Flag
-        'mat_file': '*/BMI_online*T*.mat',  # Flag
+        'roi_mat_file': ('glob', '*roi_*.mat'),
+        'bot_candidates': ('glob', '*BOT_c*'),
+        'bot_ensemble': ('glob', '*BOT_e*'),
+        'gpl_candidates': ('glob', '*GPL_c*'),
+        'gpl_ensemble': ('glob', '*GPL_e*'),
+        'xml_candidates': ('glob', '*XML_c*'),
+        'xml_ensemble': ('glob', '*XML_e*'),
+        'workspace_mat_file': ('glob', '*workspace*'),
+        'holomask_gpl_file': ('startswith', 'holoMask'),
+        'xml_holostim_seq': ('glob', '*seq_single*'),
+        'strc_mask_mat_file': ('glob', '*strcMask*'),
+        'main_prot_m_file': ('glob', '*mainProt*.m'), # Flag 
+        'bmi_target_mat_file': ('startswith', 'BMI_target_info'), # Flag 
+        'holostim_seq_mat_file': ('glob', '*holostim_seq*.mat'), # Flag 
+        'baseline_mat_file': ('startswith_ext', ('BaselineOnline', '.mat')), # Flag 
+        'target_calibration_mat_file': ('startswith_ext', ('target_calibration', '.mat')), # Flag 
+        'mat_file': ('glob', '*BMI_online*T*.mat'), # Flag 
     }
 
     # O(1) lookup instead of repeatedly scanning lists
@@ -680,12 +678,30 @@ def get_sessions2(experiment_type: str = None) -> pd.DataFrame:
         #
         files = list(abs_session_path.iterdir())
 
-        for file_name, pattern in file_patterns.items():
-
-            matches = [
-                f for f in files
-                if fnmatch(f.name, pattern)
-            ]
+        for file_name, (mode, pattern) in file_patterns.items():
+            if mode == "startswith":
+                matches = [
+                    f for f in files
+                    if f.name.startswith(pattern)
+                ]
+            
+            elif mode == "startswith_ext":
+                prefix, ext = pattern
+                matches = [
+                    f for f in files
+                        if f.name.startswith(prefix)
+                        and f.suffix.lower() == ext.lower()
+                ]
+            elif mode == "glob":
+                matches = [
+                    f for f in files
+                    if fnmatch(f.name, pattern)
+                ]
+            else:
+                raise ValueError(
+                    f"Unknown matching mode '{mode}' "
+                    f"for '{file_name}'"
+                )
 
             match_count = len(matches)
 
