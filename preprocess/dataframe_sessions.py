@@ -13,6 +13,10 @@ from preprocess.session_paths import _hE2_rew,_hE2_norew,_hE2_rew_fb,_hE3_rew,_N
 from utils.analysis_constants import AnalysisConstants as act
 from get_session_paths import get_session_paths
 
+from concurrent.futures import ThreadPoolExecutor
+from fnmatch import fnmatch
+
+
 # def get_all_sessions() -> pd.DataFrame:
 #     """ function to get a df with all sessions"""
 #     df_Holostim = pd.DataFrame(index=np.concatenate(list(_hE2_rew.values())))
@@ -485,3 +489,272 @@ def get_sessions(experiment_type: str = None) -> pd.DataFrame:
     df_issues = pd.DataFrame(issues)
 
     return df_sessions.sort_values(by=['mouse_id', 'session_date']), df_issues.sort_values(by=['mouse_id', 'session_date'])
+
+
+def get_sessions2(experiment_type: str = None) -> pd.DataFrame:
+
+    raw_path = Path('/data/project/nvl_lab/HoloBMI/Raw')
+    matches = raw_path.glob('[0-9][0-9][0-9][0-9][0-9][0-9]/NVI*/D*')
+    session_paths = [p for p in matches if p.is_dir()]
+    session_types = get_session_paths()
+
+    if experiment_type in act.experiment_types:
+        session_paths = [
+            p for p in session_paths
+            if f"{p.parts[-3]}/{p.parts[-2]}/{p.parts[-1]}" in set(session_types[experiment_type])
+        ]
+
+    # some are not the same: baseline, pretrain
+    frame_limits = {
+        'baseline': act.calibration_frames,
+        'BMI': act.bmi_frames,  # What about BMI_no_reward
+        'holostim_seq': act.seq_holo_frames,  # is this correct?
+        'pretrain': act.bmi_frames  # HoloVTA and VTA
+    }
+
+    file_patterns = {
+        'roi_mat_file': '*roi_*.mat',
+        'bot_candidates': '*BOT_c*',
+        'bot_ensemble': '*BOT_e*',
+        'gpl_candidates': '*GPL_c*',
+        'gpl_ensemble': '*GPL_e*',
+        'xml_candidates': '*XML_c*',
+        'xml_ensemble': '*XML_e*',
+        'workspace_mat_file': '*workspace*',
+        'holomask_gpl_file': '*/holoMask*',
+        'xml_holostim_seq': '*seq_single*',
+        'strc_mask_mat_file': '*strcMask*',
+        'main_prot_m_file': '*mainProt*.m*',  # Flag
+        'bmi_target_mat_file': '*/BMI_target_info*',  # Flag
+        'holostim_seq_mat_file': '*holostim_seq*.mat',  # Flag
+        'baseline_mat_file': '*/BaselineOnline*.mat',  # Flag
+        'target_calibration_mat_file': '*/target_calibration*.mat',  # Flag
+        'mat_file': '*/BMI_online*T*.mat',  # Flag
+    }
+
+    # O(1) lookup instead of repeatedly scanning lists
+    session_to_type = {
+        session: exp_type
+        for exp_type, sessions in session_types.items()
+        for session in sessions
+    }
+
+    def process_session(session_path):
+
+        session_date, mouse_id, day_index = session_path.parts[-3:]
+        session_key = f"{session_date}/{mouse_id}/{day_index}"
+
+        current_type = (
+            experiment_type
+            if experiment_type is not None
+            else session_to_type.get(session_key)
+        )
+
+        row = {
+            'mouse_id': mouse_id,
+            'session_date': session_date,
+            'day_index': day_index,
+            'experiment_type': current_type,
+            'session_path': session_key,
+            'has_error': False,
+            'has_warning': False
+        }
+
+        irow = {
+            'mouse_id': mouse_id,
+            'session_date': session_date,
+            'day_index': day_index,
+            'session_path': session_key,
+            'error_no_im_path': False
+        }
+
+        abs_session_path = session_path
+
+        #
+        # Imaging
+        #
+        parent_im_path = abs_session_path / "im"
+
+        if not parent_im_path.exists():
+            row["has_error"] = True
+            irow["error_no_im_path"] = True
+            return row, irow
+
+        im_dirs = [
+            d for d in parent_im_path.iterdir()
+            if d.is_dir()
+        ]
+
+        for experiment in frame_limits:
+
+            irow[f'error_no_{experiment.lower()}_im_path'] = False
+            irow[f'error_no_{experiment.lower()}_tiffs'] = False
+            irow[f'warning_excess_{experiment.lower()}_tiffs'] = False
+            irow[f'warning_no_{experiment.lower()}_voltage_file'] = False
+
+            if experiment == "BMI":
+                candidates = [
+                    d for d in im_dirs
+                    if d.name == "BMI"
+                ]
+            else:
+                candidates = [
+                    d for d in im_dirs
+                    if experiment in d.name
+                ]
+
+            if not candidates:
+                row["has_error"] = True
+                irow[f'error_no_{experiment.lower()}_im_path'] = True
+                irow[f'error_no_{experiment.lower()}_tiffs'] = True
+                irow[f'warning_no_{experiment.lower()}_voltage_file'] = True
+                continue
+
+            im0_path = candidates[0]
+
+            session_dirs = [
+                d for d in im0_path.iterdir()
+                if d.is_dir()
+                and d.name.startswith(
+                    f"{im0_path.name}_{session_date}T"
+                )
+            ]
+
+            if not session_dirs:
+                row["has_error"] = True
+                irow[f'error_no_{experiment.lower()}_im_path'] = True
+                irow[f'error_no_{experiment.lower()}_tiffs'] = True
+                irow[f'warning_no_{experiment.lower()}_voltage_file'] = True
+                continue
+
+            im_path = session_dirs[0]
+
+            row[f'{experiment.lower()}_im_path'] = str(
+                Path(*im_path.parts[-3:])
+            )
+
+            files = list(im_path.iterdir())
+
+            expected_voltage = (
+                f"{im_path.name}_Cycle00001_"
+                f"VoltageRecording_001.csv"
+            )
+
+            tiff_count = 0
+            voltage_file = None
+
+            for f in files:
+                name = f.name
+
+                if name.endswith(".tif"):
+                    tiff_count += 1
+
+                elif name == expected_voltage:
+                    voltage_file = f
+
+            if tiff_count > frame_limits[experiment]:
+                row["has_warning"] = True
+                irow[
+                    f'warning_excess_{experiment.lower()}_tiffs'
+                ] = True
+
+            elif tiff_count == 0:
+                row["has_error"] = True
+                irow[
+                    f'error_no_{experiment.lower()}_tiffs'
+                ] = True
+
+            if voltage_file:
+                row[f'{experiment.lower()}_voltage_file'] = str(
+                    Path(*voltage_file.parts[-4:])
+                )
+            else:
+                row[f'{experiment.lower()}_voltage_file'] = None
+                row["has_warning"] = True
+                irow[
+                    f'warning_no_{experiment.lower()}_voltage_file'
+                ] = True
+
+        #
+        # Session-level file search
+        #
+        files = list(abs_session_path.iterdir())
+
+        for file_name, pattern in file_patterns.items():
+
+            matches = [
+                f for f in files
+                if fnmatch(f.name, pattern)
+            ]
+
+            match_count = len(matches)
+
+            if file_name == "mat_file":
+
+                if match_count == 2:
+                    matches = sorted(matches)
+
+                    row["pretrain_mat_file"] = matches[0].name
+                    row["bmi_mat_file"] = matches[1].name
+
+                    irow["warning_pretrain_mat_file"] = False
+                    irow["warning_bmi_mat_file"] = False
+
+                else:
+                    row["pretrain_mat_file"] = None
+                    row["bmi_mat_file"] = None
+
+                    row["has_warning"] = True
+
+                    irow["warning_pretrain_mat_file"] = True
+                    irow["warning_bmi_mat_file"] = True
+
+            else:
+
+                if match_count > 1:
+
+                    row[file_name] = None
+                    row["has_warning"] = True
+                    irow[f'warning_excess_{file_name}'] = True
+
+                elif match_count == 0:
+
+                    row[file_name] = None
+                    row["has_warning"] = True
+                    irow[f'warning_no_{file_name}'] = True
+
+                else:
+
+                    row[file_name] = matches[0].name
+                    irow[f'warning_excess_{file_name}'] = False
+                    irow[f'warning_no_{file_name}'] = False
+
+        issue = irow if (row["has_error"] or row["has_warning"]) else None
+        return row, issue
+
+    #
+    # Parallel execution
+    #
+    with ThreadPoolExecutor(max_workers=16) as pool:
+        results = list(pool.map(process_session, session_paths))
+
+    sessions = []
+    issues = []
+
+    for row, issue in results:
+        sessions.append(row)
+
+        if issue is not None:
+            issues.append(issue)
+
+    df_sessions = pd.DataFrame(sessions)
+    df_issues = pd.DataFrame(issues)
+
+    return (
+        df_sessions.sort_values(
+            by=["mouse_id", "session_date"]
+        ),
+        df_issues.sort_values(
+            by=["mouse_id", "session_date"]
+        ),
+    )
