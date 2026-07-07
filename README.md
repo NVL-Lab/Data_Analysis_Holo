@@ -147,31 +147,34 @@ Look at lab-wiki for how to work with suite2p and conda
 Can be done via https or the app.
 Should be cloned outside of the nvl_lab shared drive
 
-## Alter Filters
-
-Function get_filters() in run_preprocess_batch.py gives a dictionary with the corresponding dataframe header and values you wish to run slurm on
+## Determine what datasets to run
+### Location: utils/holobmi_df/holo_df_tools.py
+#### Function: get_suite2p_filters()
+Returns a dictionary with the corresponding dataframe header and values you want to use 
 It is used to find the rows of information that match
-Alter it based on what you would like to run and save
+Alter it based on what you would like to run and save.
 
-## Alter suite2p settings
+### Location: utils/params.py
+#### Function: get_suite2p_params()
+Returns a dictionary with directories and files slurm needs to run suite2p with.
+Alter based on where your files are.
 
-Script utils/suite2p_v1_config.py contains function get_suite2p_holo_settings() that contains the settings used for suite2p 
-Change and add according to what you may need, Suite2p's github file suite2p/parameters.py has all possible parameters 
+## Suite2p settings
+### Location: utils/suite2p_v1_config.py
+#### Function: get_suite2p_holo_settings()
+Contains the settings used for suite2p. 
+Change if needed. For example, ROIs extracted are unexpected or video has too much motion.
 
-## Slurm file
+## Slurm
+### Location: utils/slurm/suite2p_preprocess_slurm.sh 
+Change the environment you activate and location of where your output and error logs will go to.\
+This runs functions from **preprocess/preprocess_suite2p_v1.py**, which runs **utils/suite2p_v1_config.sh**
 
-Run run_preprocess_batch.py
 
-`python run_preprocess_batch.py -1 <directory_to_parquet_file_with_experiment_data> <save_directory> <directory_where_raw_experiment data is> <frame_rate_of_experiment> <slurm_file_directory>`
-
-While in Data_Analysis_Holo/ 
-
-`python run_preprocess_batch.py -1 holobmi_df.parquet <save_directory_in_personal_disk> /data/project/nvl_lab/HoloBMI/Raw 29.752 utils/preprocess_slurm.sh`
-
-The frame_rate is for the HoloBMI experiment.
-
-The -1 can be replaced by a whole number and the script will run the corresponding dataframe row, however, it will not be run via slurm
-
+## Run suite2p
+### Location: run_slurm.py
+`python run_slurm.py 0`\
+0 runs suite2p through slurm (1 runs nwb conversion through slurm)
 
 ---
 
