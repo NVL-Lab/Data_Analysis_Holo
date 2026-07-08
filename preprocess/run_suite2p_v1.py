@@ -46,8 +46,8 @@ if __name__ == '__main__':
     raw_file_chan2 = db.get("raw_file_chan2", None) if twoc else None
     badframes0 = np.zeros(db["nframes"], "bool")
 
-    device = suite2p.run_s2._assign_torch_device(settings["torch_device"])
-    run_registration = suite2p.run_s2._check_run_registration(settings, db)
+    device = suite2p.run_s2p._assign_torch_device(settings["torch_device"])
+    run_registration = suite2p.run_s2p._check_run_registration(settings, db)
 
     np.save(f'{db["save_path0"]}/{db["save_folder"]}/db.npy', db)
     np.save(f'{db["save_path0"]}/{db["save_folder"]}/settings.npy', settings)
