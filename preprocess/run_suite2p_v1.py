@@ -4,12 +4,14 @@ import sys
 import numpy as np
 #from suite2p.run_s2p import logger_setup, _check_run_registration, _assign_torch_device
 #from suite2p.io import init_dbs
+import importlib
 import suite2p
 from pathlib import Path
 from utils.suite2p_v1_config import get_suite2p_holo_db
 import contextlib
 
 if __name__ == '__main__':
+    s2p = importlib.import_module("suite2p.run_s2p")
     data_path = sys.argv[1]
     save_path = sys.argv[2]
 
@@ -45,14 +47,13 @@ if __name__ == '__main__':
     reg_file_chan2 = db["reg_file_chan2"] if twoc else None
     raw_file_chan2 = db.get("raw_file_chan2", None) if twoc else None
     badframes0 = np.zeros(db["nframes"], "bool")
-
-    device = suite2p.run_s2p._assign_torch_device(settings["torch_device"])
-    run_registration = suite2p.run_s2p._check_run_registration(settings, db)
+    device = s2p._assign_torch_device(settings["torch_device"])
+    run_registration = s2p._check_run_registration(settings, db)
 
     np.save(f'{db["save_path0"]}/{db["save_folder"]}/db.npy', db)
     np.save(f'{db["save_path0"]}/{db["save_folder"]}/settings.npy', settings)
 
-    suite2p.run_s2p.logger_setup(save_path)
+    s2p.logger_setup(save_path)
     null = contextlib.nullcontext()
     with suite2p.io.BinaryFile(Ly=db['Ly'], Lx=db['Lx'], filename=f_raw, n_frames=db['nframes'], write=False) \
             if raw else null as f_raw, \
