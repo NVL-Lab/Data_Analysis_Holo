@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     Path(save_path).mkdir(parents=True, exist_ok=True)
     db = get_suite2p_holo_db([data_path], save_path, [], np.array([False]))
-    db = suite2p.io.init_dbs(db)[0]
+    db = suite2p.io.init_dbs(db)[0] # dirs are made here
     settings = suite2p.default_settings()
 
     # General settings
@@ -34,15 +34,15 @@ if __name__ == '__main__':
     #settings['classification']['preclassify'] = 0.5  # 1.
 
     # Data dimensions
-    #f_npy = np.load(data_path)#.astype(np.float32)
+    f_npy = np.load(data_path)#.astype(np.float32)
     suite2p.io.BinaryFile.convert_numpy_file_to_suite2p_binary(data_path, db['raw_file'])
     # Need by the GUI
     #db['reg_file'] = f'{save_path}/data.bin'
     #db['save_path'] = save_path
     db['input_format'] = 'bin'
-    db['nframes'] = f_raw.shape[0]
-    db['Ly'] = f_raw.shape[1]
-    db['Lx'] = f_raw.shape[2]
+    db['nframes'] = f_npy.shape[0]
+    db['Ly'] = f_npy.shape[1]
+    db['Lx'] = f_npy.shape[2]
     twoc = db['nchannels'] > 1
     reg_file_chan2 = db["reg_file_chan2"] if twoc else None
     raw_file_chan2 = db.get("raw_file_chan2", None) if twoc else None
