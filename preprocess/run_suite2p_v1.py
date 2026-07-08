@@ -26,6 +26,25 @@ if __name__ == '__main__':
     settings['registration']['two_step_registration'] = True  # db['keep_movie_raw'] needs to be True
 
     # Cell classification
-    settings['classification']['preclassify'] = 0.5  # 1.
+    #settings['classification']['preclassify'] = 0.5  # 1.
 
-    suite2p.run_s2p(db, settings)
+    # Data dimensions
+    f_reg = np.load(data_path)
+    #settings['Ly'] = rec.shape[1]
+    #settings['Lx'] = rec.shape[2]
+
+    # Needed for the extraction and addition of ROIs
+    #print('Binarizing data...')
+    #f_input = suite2p.io.BinaryFile(Ly=rec.shape[1], Lx=rec.shape[2], filename=data_path)  # reads in data from npy
+    #_ = suite2p.io.BinaryFile(Ly=rec.shape[1], Lx=rec.shape[2], filename=save_path / 'data.bin',
+    #                          n_frames=rec.shape[0])  # writes data into a bin file
+    #print('Registering movie...')
+
+    #print('Detecting ROIs...')
+    #ops, stat = suite2p.detection_wrapper(f_reg=image, ops=ops, classfile=suite2p.classification.builtin_classfile)
+    #print('Classifying cells...')
+    #iscell = suite2p.classification.classify(stat, suite2p.classification.builtin_classfile)
+
+    suite2p.pipeline(save_path, f_reg)
+
+    #suite2p.run_s2p(db, settings)
