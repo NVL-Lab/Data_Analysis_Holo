@@ -3,12 +3,14 @@ __author__ = 'Saul'
 import sys
 import numpy as np
 import suite2p
+from pathlib import Path
 from utils.suite2p_v1_config import get_suite2p_holo_db
 
 if __name__ == '__main__':
     data_path = sys.argv[1]
     save_path = sys.argv[2]
 
+    Path(save_path).mkdir(parents=True, exist_ok=True)
     db = get_suite2p_holo_db([data_path], save_path, [], False)
     settings = suite2p.default_settings()
 

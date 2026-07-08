@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=3i_recording             ### Name of the job
+#SBATCH --job-name=suite2p_190930             ### Name of the job
 #SBATCH --nodes=1                       ### Number of : Nodes total CPUs is equal to --cpus-per-task times --ntasks
 #SBATCH --ntasks=1                     ### Number of Tasks
 #SBATCH --cpus-per-task=32               ### Number of Tasks per CPU #48
@@ -8,8 +8,8 @@
 #SBATCH --mem=128G                        ### Memory required, 4 gigabyte
 #SBATCH --partition=amperenodes            ### Cheaha Partition : amperenodes-medium
 #SBATCH --time=12:00:00                 ### Estimated Time of Completion #48
-#SBATCH --output=/data/project/nvl_lab/anna_test_data/%x_%j.out              ### Slurm Output file, %x is job name, %j is job id
-#SBATCH --error=/data/project/nvl_lab/anna_test_data/%x_%j.err               ### Slurm Error file, %x is job name, %j is job id
+#SBATCH --output=/home/sgurgua4/Documents/project/nvl_lab/holobmi_data/data_analysis_holo_logs/%x_%j.out              ### Slurm Output file, %x is job name, %j is job id
+#SBATCH --error=/home/sgurgua4/Documents/project/nvl_lab/holobmi_data/data_analysis_holo_logs/%x_%j.err               ### Slurm Error file, %x is job name, %j is job id
 
 SECONDS=0
 
@@ -19,13 +19,15 @@ module load cuDNN/8.9.2.26-CUDA-12.2.0
 
 ### To activate `pytools-env` conda environment
 module load Anaconda3/2023.07-2
-conda activate suite2p_v1
+conda activate dlc
 
 # project root
 cd /home/sgurgua4/Documents/project/nvl_lab/Data_Analysis_Holo
 
-### Runs the script
-srun --nodes=1 --ntasks=1 python -m preprocess.run_suite2p_v1 /data/project/nvl_lab/anna_test_data/ImageData_Ch0_TP0000000.npy /data/project/nvl_lab/anna_test_data/proccessed_suite2p &
+### Runs the script in parallel
+for i in "$@"; do
+  srun --nodes=1 --ntasks=1 python -m preprocess.run_preprocess_sessions "$i" &
+done
 wait
 
 duration=$SECONDS
