@@ -11,7 +11,7 @@ if __name__ == '__main__':
     save_path = sys.argv[2]
 
     Path(save_path).mkdir(parents=True, exist_ok=True)
-    db = get_suite2p_holo_db([data_path], save_path, [], False)
+    db = get_suite2p_holo_db([data_path], save_path, [], np.array([False]))
     settings = suite2p.default_settings()
 
     # General settings
