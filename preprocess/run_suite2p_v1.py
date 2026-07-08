@@ -29,7 +29,7 @@ if __name__ == '__main__':
     #settings['classification']['preclassify'] = 0.5  # 1.
 
     # Data dimensions
-    f_reg = np.load(data_path)
+    f_reg = np.load(data_path).astype(np.float32)
     #settings['Ly'] = rec.shape[1]
     #settings['Lx'] = rec.shape[2]
 
