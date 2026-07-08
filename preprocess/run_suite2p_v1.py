@@ -47,8 +47,8 @@ if __name__ == '__main__':
     #print('Classifying cells...')
     #iscell = suite2p.classification.classify(stat, suite2p.classification.builtin_classfile)
     db['input_format'] = 'npy'
-    np.save(os.path.join(save_path, 'db.npy'), db)
-    np.save(os.path.join(save_path, 'settings.npy'), settings)
+    np.save(f'{save_path}/db.npy', db)
+    np.save(f'{save_path}/settings.npy', settings)
     suite2p.pipeline(save_path, f_reg)
 
     #suite2p.run_s2p(db, settings)
