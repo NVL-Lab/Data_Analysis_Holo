@@ -2,11 +2,12 @@ __author__ = 'Saul'
 
 import sys
 import numpy as np
+#from suite2p.run_s2p import logger_setup, _check_run_registration, _assign_torch_device
+#from suite2p.io import init_dbs
 import suite2p
 from pathlib import Path
 from utils.suite2p_v1_config import get_suite2p_holo_db
-import logging
-logger = logging.getLogger(__name__)
+import contextlib
 
 if __name__ == '__main__':
     data_path = sys.argv[1]
@@ -24,31 +25,44 @@ if __name__ == '__main__':
     settings['io']['save_ops_orig'] = True
 
     # Registration settings
-    settings['registration']['do_bidiphase'] = True  # False
-    settings['registration']['two_step_registration'] = True  # db['keep_movie_raw'] needs to be True
+    #settings['registration']['do_bidiphase'] = True  # False
+    #settings['registration']['two_step_registration'] = True  # db['keep_movie_raw'] needs to be True
 
     # Cell classification
     #settings['classification']['preclassify'] = 0.5  # 1.
 
     # Data dimensions
-    f_reg = np.load(data_path).astype(np.float32)
-    #settings['Ly'] = rec.shape[1]
-    #settings['Lx'] = rec.shape[2]
-
-    # Needed for the extraction and addition of ROIs
-    #print('Binarizing data...')
-    #f_input = suite2p.io.BinaryFile(Ly=rec.shape[1], Lx=rec.shape[2], filename=data_path)  # reads in data from npy
-    #_ = suite2p.io.BinaryFile(Ly=rec.shape[1], Lx=rec.shape[2], filename=save_path / 'data.bin',
-    #                          n_frames=rec.shape[0])  # writes data into a bin file
-    #print('Registering movie...')
-
-    #print('Detecting ROIs...')
-    #ops, stat = suite2p.detection_wrapper(f_reg=image, ops=ops, classfile=suite2p.classification.builtin_classfile)
-    #print('Classifying cells...')
-    #iscell = suite2p.classification.classify(stat, suite2p.classification.builtin_classfile)
+    f_raw = np.load(data_path).astype(np.float32)
+    db = suite2p.io.init_dbs(db)[0]
+    # Need by the GUI
+    #db['reg_file'] = f'{save_path}/data.bin'
+    #db['save_path'] = save_path
     db['input_format'] = 'npy'
-    np.save(f'{save_path}/db.npy', db)
-    np.save(f'{save_path}/settings.npy', settings)
-    suite2p.pipeline(save_path, f_reg)
+    db['nframes'] = f_raw.shape[0]
+    db['Ly'] = f_raw.shape[1]
+    db['Lx'] = f_raw.shape[2]
+    twoc = db['nchannels'] > 1
+    reg_file_chan2 = db["reg_file_chan2"] if twoc else None
+    raw_file_chan2 = db.get("raw_file_chan2", None) if twoc else None
+    badframes0 = np.zeros(db["nframes"], "bool")
+
+    device = suite2p.run_s2._assign_torch_device(settings["torch_device"])
+    run_registration = suite2p.run_s2._check_run_registration(settings, db)
+
+    np.save(f'{db["save_path0"]}/{db["save_folder"]}/db.npy', db)
+    np.save(f'{db["save_path0"]}/{db["save_folder"]}/settings.npy', settings)
+
+    suite2p.run_s2p.logger_setup(save_path)
+    null = contextlib.nullcontext()
+    with suite2p.io.BinaryFile(Ly=db['Ly'], Lx=db['Lx'], filename=f_raw, n_frames=db['nframes'], write=False) \
+            if raw else null as f_raw, \
+        suite2p.io.BinaryFile(Ly=db['Ly'], Lx=db['Lx'], filename=db['reg_file'], n_frames=db['nframes'], write=True) as f_reg, \
+        suite2p.io.BinaryFile(Ly=db['Ly'], Lx=db['Lx'], filename=raw_file_chan2, n_frames=n_frames, write=False) \
+            if raw and twoc else null as f_raw_chan2, \
+        suite2p.io.BinaryFile(Ly=db['Ly'], Lx=db['Lx'], filename=reg_file_chan2, n_frames=n_frames, write=True) \
+            if twoc else null as f_reg_chan2:
+
+        outputs = suite2p.pipeline(db['save_path'], f_reg, f_raw, f_reg_chan2, f_raw_chan2,
+                   run_registration, settings, badframes=badframes0, stat=None, device=device, Zstack=None)
 
     #suite2p.run_s2p(db, settings)
