@@ -5,6 +5,8 @@ import numpy as np
 import suite2p
 from pathlib import Path
 from utils.suite2p_v1_config import get_suite2p_holo_db
+import logging
+logger = logging.getLogger(__name__)
 
 if __name__ == '__main__':
     data_path = sys.argv[1]
@@ -44,7 +46,9 @@ if __name__ == '__main__':
     #ops, stat = suite2p.detection_wrapper(f_reg=image, ops=ops, classfile=suite2p.classification.builtin_classfile)
     #print('Classifying cells...')
     #iscell = suite2p.classification.classify(stat, suite2p.classification.builtin_classfile)
-
+    db['input_format'] = 'npy'
+    np.save(os.path.join(save_path, 'db.npy'), db)
+    np.save(os.path.join(save_path, 'settings.npy'), settings)
     suite2p.pipeline(save_path, f_reg)
 
     #suite2p.run_s2p(db, settings)
