@@ -139,7 +139,7 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     """
 
     # loads suite2p processed data
-    data_path = Path(processed_data_path) / dataset_path / 'suite2p/plane0'
+    data_path = Path(processed_data_path) / dataset_path / 'suite2p'/ 'plane0'
     regos = np.load(data_path / 'reg_outputs.npy', allow_pickle=True).item()
     iscell = np.load(data_path / 'iscell.npy', allow_pickle=True)
     stat = np.load(data_path / 'stat.npy', allow_pickle=True)
@@ -200,14 +200,6 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     axes[1, 1].imshow(np.stack([b, emean_image, e2_mask_false], axis=-1), cmap='bone')
     axes[1, 1].set_title(f'e2: {e2_mat}; s2p_false: {idxs_false[len(e1):]}')
 
-    # Store the original titles
-    base_titles = {
-        axes[0, 0]: f'e1: {e1_mat}; s2p: {idxs[:len(e1)]}',
-        axes[1, 0]: f'e2: {e2_mat}; s2p: {idxs[len(e1):]}',
-        axes[0, 1]: f'e1: {e1_mat}; s2p_false: {idxs_false[:len(e1)]}',
-        axes[1, 1]: f'e2: {e2_mat}; s2p_false: {idxs_false[len(e1):]}',
-    }
-
     mask_lookup = {
         axes[0, 0]: (e1_mask, roi_mask),
         axes[1, 0]: (e2_mask, roi_mask),
@@ -220,10 +212,10 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
         if event.inaxes not in mask_lookup:
             return
 
-        display_mask, index_mask = mask_lookup[event.inaxes]
-
         if event.xdata is None or event.ydata is None:
             return
+
+        display_mask, index_mask = mask_lookup[event.inaxes]
 
         x = int(event.xdata)
         y = int(event.ydata)
@@ -232,24 +224,11 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
                 0 <= y < display_mask.shape[0]):
             return
 
-        # reset all titles
-        for ax, title in base_titles.items():
-            ax.set_title(title, color='black')
-
-        # clicked on a highlighted neuron
         if display_mask[y, x] > 0:
             roi_idx = int(index_mask[y, x]) - 1
-
-            event.inaxes.set_title(
-                f'{base_titles[event.inaxes]}\nSelected ROI: {roi_idx}',
-                color='red'
-            )
-
             print(f'Selected ROI: {roi_idx}')
 
-        fig.canvas.draw_idle()
-
-    fig.canvas.mpl_connect("button_press_event", on_click)
+    fig.canvas.mpl_connect('button_press_event', on_click)
 
     plt.show()
     plt.close()
