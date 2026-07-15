@@ -200,15 +200,17 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     axes[1, 1].imshow(np.stack([b, emean_image, e2_mask_false], axis=-1), cmap='bone')
     axes[1, 1].set_title(f'e2: {e2_mat}; s2p_false: {idxs_false[len(e1):]}')
 
-    # =====================
-    # ADD THIS BLOCK HERE
-    # =====================
+    # DEBUG
+    #print("Backend:", matplotlib.get_backend())
+    print("Unique e1_mask values:", np.unique(e1_mask)[:20])
+    print("Unique roi_mask values:", np.unique(roi_mask)[:20])
 
+    # Use roi_mask so every detected Suite2p ROI can be hovered
     mask_lookup = {
-        axes[0, 0]: e1_mask,
-        axes[1, 0]: e2_mask,
-        axes[0, 1]: e1_mask_false,
-        axes[1, 1]: e2_mask_false,
+        axes[0, 0]: (e1_mask, roi_mask),
+        axes[1, 0]: (e2_mask, roi_mask),
+        axes[0, 1]: (e1_mask_false, roi_mask_false),
+        axes[1, 1]: (e2_mask_false, roi_mask_false),
     }
 
     annot = axes[0, 0].annotate(
@@ -227,37 +229,37 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
             fig.canvas.draw_idle()
             return
 
+        display_mask, index_mask = mask_lookup[event.inaxes]
+
         if event.xdata is None or event.ydata is None:
             annot.set_visible(False)
             fig.canvas.draw_idle()
             return
 
-        mask = mask_lookup[event.inaxes]
-
         x = int(event.xdata)
         y = int(event.ydata)
 
-        if not (0 <= x < mask.shape[1] and 0 <= y < mask.shape[0]):
+        if not (0 <= x < display_mask.shape[1] and
+                0 <= y < display_mask.shape[0]):
             annot.set_visible(False)
             fig.canvas.draw_idle()
             return
 
-        roi = int(mask[y, x])
+        # are we inside one of the displayed neurons?
+        if display_mask[y, x] > 0:
 
-        if roi > 0:
+            roi = int(index_mask[y, x])
+
             annot.xy = (x, y)
-            annot.set_text(f"Suite2p ROI: {roi - 1}")
+            annot.set_text(f"ROI {roi - 1}")
             annot.set_visible(True)
+
         else:
             annot.set_visible(False)
 
         fig.canvas.draw_idle()
 
     fig.canvas.mpl_connect("motion_notify_event", on_move)
-
-    # =====================
-    # END OF ADDED BLOCK
-    # =====================
 
     plt.show()
     plt.close()
