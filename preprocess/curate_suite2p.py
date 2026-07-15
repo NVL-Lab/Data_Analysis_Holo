@@ -199,5 +199,65 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     axes[0, 1].set_title(f'e1: {e1_mat}; s2p_false: {idxs_false[:len(e1)]}')
     axes[1, 1].imshow(np.stack([b, emean_image, e2_mask_false], axis=-1), cmap='bone')
     axes[1, 1].set_title(f'e2: {e2_mat}; s2p_false: {idxs_false[len(e1):]}')
+
+    # =====================
+    # ADD THIS BLOCK HERE
+    # =====================
+
+    mask_lookup = {
+        axes[0, 0]: e1_mask,
+        axes[1, 0]: e2_mask,
+        axes[0, 1]: e1_mask_false,
+        axes[1, 1]: e2_mask_false,
+    }
+
+    annot = axes[0, 0].annotate(
+        "",
+        xy=(0, 0),
+        xytext=(10, 10),
+        textcoords="offset points",
+        bbox=dict(boxstyle="round", fc="white", alpha=0.8),
+    )
+    annot.set_visible(False)
+
+    def on_move(event):
+
+        if event.inaxes not in mask_lookup:
+            annot.set_visible(False)
+            fig.canvas.draw_idle()
+            return
+
+        if event.xdata is None or event.ydata is None:
+            annot.set_visible(False)
+            fig.canvas.draw_idle()
+            return
+
+        mask = mask_lookup[event.inaxes]
+
+        x = int(event.xdata)
+        y = int(event.ydata)
+
+        if not (0 <= x < mask.shape[1] and 0 <= y < mask.shape[0]):
+            annot.set_visible(False)
+            fig.canvas.draw_idle()
+            return
+
+        roi = int(mask[y, x])
+
+        if roi > 0:
+            annot.xy = (x, y)
+            annot.set_text(f"Suite2p ROI: {roi - 1}")
+            annot.set_visible(True)
+        else:
+            annot.set_visible(False)
+
+        fig.canvas.draw_idle()
+
+    fig.canvas.mpl_connect("motion_notify_event", on_move)
+
+    # =====================
+    # END OF ADDED BLOCK
+    # =====================
+
     plt.show()
     plt.close()
