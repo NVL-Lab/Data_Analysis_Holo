@@ -200,12 +200,14 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     axes[1, 1].imshow(np.stack([b, emean_image, e2_mask_false], axis=-1), cmap='bone')
     axes[1, 1].set_title(f'e2: {e2_mat}; s2p_false: {idxs_false[len(e1):]}')
 
-    # DEBUG
-    #print("Backend:", matplotlib.get_backend())
-    print("Unique e1_mask values:", np.unique(e1_mask)[:20])
-    print("Unique roi_mask values:", np.unique(roi_mask)[:20])
+    # Store the original titles
+    base_titles = {
+        axes[0, 0]: f'e1: {e1_mat}; s2p: {idxs[:len(e1)]}',
+        axes[1, 0]: f'e2: {e2_mat}; s2p: {idxs[len(e1):]}',
+        axes[0, 1]: f'e1: {e1_mat}; s2p_false: {idxs_false[:len(e1)]}',
+        axes[1, 1]: f'e2: {e2_mat}; s2p_false: {idxs_false[len(e1):]}',
+    }
 
-    # Use roi_mask so every detected Suite2p ROI can be hovered
     mask_lookup = {
         axes[0, 0]: (e1_mask, roi_mask),
         axes[1, 0]: (e2_mask, roi_mask),
@@ -213,26 +215,19 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
         axes[1, 1]: (e2_mask_false, roi_mask_false),
     }
 
-    annot = axes[0, 0].annotate(
-        "",
-        xy=(0, 0),
-        xytext=(10, 10),
-        textcoords="offset points",
-        bbox=dict(boxstyle="round", fc="white", alpha=0.8),
-    )
-    annot.set_visible(False)
-
     def on_move(event):
 
+        # Reset all titles
+        for ax, title in base_titles.items():
+            ax.set_title(title, color='black')
+
         if event.inaxes not in mask_lookup:
-            annot.set_visible(False)
             fig.canvas.draw_idle()
             return
 
         display_mask, index_mask = mask_lookup[event.inaxes]
 
         if event.xdata is None or event.ydata is None:
-            annot.set_visible(False)
             fig.canvas.draw_idle()
             return
 
@@ -241,21 +236,17 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
 
         if not (0 <= x < display_mask.shape[1] and
                 0 <= y < display_mask.shape[0]):
-            annot.set_visible(False)
             fig.canvas.draw_idle()
             return
 
-        # are we inside one of the displayed neurons?
+        # Only respond if hovering on one of the highlighted neurons
         if display_mask[y, x] > 0:
+            roi_idx = int(index_mask[y, x]) - 1
 
-            roi = int(index_mask[y, x])
-
-            annot.xy = (x, y)
-            annot.set_text(f"ROI {roi - 1}")
-            annot.set_visible(True)
-
-        else:
-            annot.set_visible(False)
+            event.inaxes.set_title(
+                f'{base_titles[event.inaxes]}\nHovered ROI: {roi_idx}',
+                color='red'
+            )
 
         fig.canvas.draw_idle()
 
