@@ -207,6 +207,7 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
         axes[1, 1]: (e2_mask_false, roi_mask_false),
     }
 
+    # Clicking on an ROI will give you the corresponding suite2p index on the terminal
     def on_click(event):
 
         if event.inaxes not in mask_lookup:
@@ -226,7 +227,7 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
 
         if display_mask[y, x] > 0:
             roi_idx = int(index_mask[y, x]) - 1
-            print(f'Selected ROI: {roi_idx}')
+            print(f'Selected s2p ROI: {roi_idx}')
 
     fig.canvas.mpl_connect('button_press_event', on_click)
 
