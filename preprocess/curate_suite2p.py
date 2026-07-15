@@ -215,20 +215,14 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
         axes[1, 1]: (e2_mask_false, roi_mask_false),
     }
 
-    def on_move(event):
-
-        # Reset all titles
-        for ax, title in base_titles.items():
-            ax.set_title(title, color='black')
+    def on_click(event):
 
         if event.inaxes not in mask_lookup:
-            fig.canvas.draw_idle()
             return
 
         display_mask, index_mask = mask_lookup[event.inaxes]
 
         if event.xdata is None or event.ydata is None:
-            fig.canvas.draw_idle()
             return
 
         x = int(event.xdata)
@@ -236,21 +230,26 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
 
         if not (0 <= x < display_mask.shape[1] and
                 0 <= y < display_mask.shape[0]):
-            fig.canvas.draw_idle()
             return
 
-        # Only respond if hovering on one of the highlighted neurons
+        # reset all titles
+        for ax, title in base_titles.items():
+            ax.set_title(title, color='black')
+
+        # clicked on a highlighted neuron
         if display_mask[y, x] > 0:
             roi_idx = int(index_mask[y, x]) - 1
 
             event.inaxes.set_title(
-                f'{base_titles[event.inaxes]}\nHovered ROI: {roi_idx}',
+                f'{base_titles[event.inaxes]}\nSelected ROI: {roi_idx}',
                 color='red'
             )
 
+            print(f'Selected ROI: {roi_idx}')
+
         fig.canvas.draw_idle()
 
-    fig.canvas.mpl_connect("motion_notify_event", on_move)
+    fig.canvas.mpl_connect("button_press_event", on_click)
 
     plt.show()
     plt.close()
