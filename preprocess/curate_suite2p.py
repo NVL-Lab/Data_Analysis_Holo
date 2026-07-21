@@ -201,3 +201,31 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     axes[1, 1].set_title(f'e2: {e2_mat}; s2p_false: {idxs_false[len(e1):]}')
     plt.show()
     plt.close()
+
+def get_ensemble_masks(processed_data_path:Path, dataset_path:Path, e1_s2p_indexes:List, e2_s2p_indexes:List) -> Tuple[np.ndarray, np.ndarray]:
+    """
+        function that returns identified suite2p ensemble neuron masks
+        :param processed_data_path: folder where the suite2p processed files are stored
+        :param dataset_path: folder where the dataset is stored <session_date>/<mouse_id>/<day>
+        :param e1_s2p_indexes: indexes of e1 neurons in suite2p masks
+        :param e2_s2p_indexes: indexes of e1 neurons in suite2p masks
+    """
+
+    # loads suite2p processed data
+    data_path = Path(processed_data_path) / dataset_path / 'suite2p/plane0'
+    regos = np.load(data_path / 'reg_outputs.npy', allow_pickle=True).item()
+    stat = np.load(data_path / 'stat.npy', allow_pickle=True)
+    emean_image = regos['meanImgE']
+
+    # Initializes mask for suite2p cells and non-cells
+    e1_mask = np.zeros((emean_image.shape[0], emean_image.shape[1]), dtype=np.float32)  # (Lx, Ly)
+    e2_mask = e1_mask.copy()
+
+    # Populates the roi mask
+    # Note: i+1 because 0 is everything other than an roi. the 0 index from stat is a neuron however
+    for i in e1_s2p_indexes:
+        e1_mask[stat[i]['ypix'], stat[i]['xpix']] = i+1  # + stat[i]['lam']
+    for i in e2_s2p_indexes:
+        e2_mask[stat[i]['ypix'], stat[i]['xpix']] = i+1  # + stat[i]['lam']
+
+    return e1_mask, e2_mask
