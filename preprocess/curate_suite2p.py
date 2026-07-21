@@ -139,7 +139,7 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     """
 
     # loads suite2p processed data
-    data_path = Path(processed_data_path) / dataset_path / 'suite2p/plane0'
+    data_path = Path(processed_data_path) / dataset_path / 'suite2p'/ 'plane0'
     regos = np.load(data_path / 'reg_outputs.npy', allow_pickle=True).item()
     iscell = np.load(data_path / 'iscell.npy', allow_pickle=True)
     stat = np.load(data_path / 'stat.npy', allow_pickle=True)
@@ -199,6 +199,38 @@ def compare_neurons(processed_data_path:Path, raw_data_path:Path, dataset_path: 
     axes[0, 1].set_title(f'e1: {e1_mat}; s2p_false: {idxs_false[:len(e1)]}')
     axes[1, 1].imshow(np.stack([b, emean_image, e2_mask_false], axis=-1), cmap='bone')
     axes[1, 1].set_title(f'e2: {e2_mat}; s2p_false: {idxs_false[len(e1):]}')
+
+    mask_lookup = {
+        axes[0, 0]: (e1_mask, roi_mask),
+        axes[1, 0]: (e2_mask, roi_mask),
+        axes[0, 1]: (e1_mask_false, roi_mask_false),
+        axes[1, 1]: (e2_mask_false, roi_mask_false),
+    }
+
+    # Clicking on an ROI will give you the corresponding suite2p index on the terminal
+    def on_click(event):
+
+        if event.inaxes not in mask_lookup:
+            return
+
+        if event.xdata is None or event.ydata is None:
+            return
+
+        display_mask, index_mask = mask_lookup[event.inaxes]
+
+        x = int(event.xdata)
+        y = int(event.ydata)
+
+        if not (0 <= x < display_mask.shape[1] and
+                0 <= y < display_mask.shape[0]):
+            return
+
+        if display_mask[y, x] > 0:
+            roi_idx = int(index_mask[y, x]) - 1
+            print(f'Selected s2p ROI: {roi_idx}')
+
+    fig.canvas.mpl_connect('button_press_event', on_click)
+
     plt.show()
     plt.close()
 
