@@ -6,13 +6,6 @@ def double_video_fps(video_path: Path) -> None:
     video_name = Path(video_path).stem
     cap = cv2.VideoCapture(video_path)
 
-    fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
-    print(fourcc)
-    codec = "".join(chr((fourcc >> (8 * i)) & 0xFF) for i in range(4))
-    print("Codec:", codec)
-    cap.release()
-    exit()
-
     # get FPS of input video
     fps = cap.get(cv2.CAP_PROP_FPS)
     fps_output = fps * 2
@@ -20,7 +13,7 @@ def double_video_fps(video_path: Path) -> None:
     video_output = base_path / f'{video_name}_corrected.avi'
 
     # define VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*'FFV1') # mp4v
+    fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
     out = cv2.VideoWriter(video_output, fourcc, fps_output,
                           (int(cap.get(3)), int(cap.get(4))))
 
