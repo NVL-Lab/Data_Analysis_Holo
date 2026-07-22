@@ -1,4 +1,5 @@
 import cv2
+from pathlib import Path
 
 def double_video_fps(video_path: Path) -> None:
     base_path = Path(video_path).parent
