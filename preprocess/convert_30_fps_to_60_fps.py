@@ -1,38 +1,32 @@
-# import modules
 import cv2
 
+def double_video_fps(video_path: Path) -> None:
+    base_path = Path(video_path).parent
+    video_name = Path(video_path).stem
+    cap = cv2.VideoCapture(video_path)
 
-# open file
-base_path = Path(
-        '/data/project/nvl_lab/HoloBMI/Behavior/191003/NVI13/base'
-)
+    # get FPS of input video
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    fps_output = fps * 2
+    print(fps)
 
-video_path = base_path / 'video_2019-10-03T16_03_57.avi'
-cap = cv2.VideoCapture(video_path)
+    video_output = base_path / f'{video_name}_corrected.avi'
 
-# get FPS of input video
-fps = cap.get(cv2.CAP_PROP_FPS)
+    # define VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'FFV1') # mp4v
+    out = cv2.VideoWriter(video_output, fourcc, fps_output,
+                          (int(cap.get(3)), int(cap.get(4))))
 
-# define output video and it's FPS
-output_file = 'output.mp4'
-output_fps = fps * 2
+    # read and write frames for output video
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        out.write(frame)
 
-# define VideoWriter object
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter(output_file, fourcc, output_fps,
-                      (int(cap.get(3)), int(cap.get(4))))
+    # release resources
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
 
-# read and write frams for output video
-while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret:
-        break
-
-    out.write(frame)
-
-# release resources
-cap.release()
-out.release()
-cv2.destroyAllWindows()
-
-print("Saved:", output_file)
+    print('Saved: ', video_output)
