@@ -11,7 +11,7 @@ def get_dlc_settings():
         ],
         'working_directory': '/home/sgurgua4/Downloads/dlc_test',
         'copy_videos': False, # False (default)
-        'video_type': 'avi',
+        'videotype': 'avi',
         'multianimal': False, # False (default)
         'individuals': None   # None (default); relevant only if multianimal is True
     }
@@ -289,6 +289,9 @@ def main(project_settings: dict, frame_settings: dict, training_data_settings: d
     # Phase 1: Project Setup
     # =====================================================
 
+    # get all videos for training
+
+
     # project creation
     config_path = dlc.create_new_project(**project_settings)
 
@@ -300,6 +303,9 @@ def main(project_settings: dict, frame_settings: dict, training_data_settings: d
     # Phase 2: Data preparation
     # =====================================================
 
+    # extracts frames from videos to create a training dataset
+    #   with k-means, frames that vary are within different clusters
+    #   results in images in labeled-data
     dlc.extract_frames(config_path, **frame_settings['extract'])
     dlc.label_frames(config_path, **frame_settings['label'])
     dlc.check_labels(config_path, **frame_settings['check'])
