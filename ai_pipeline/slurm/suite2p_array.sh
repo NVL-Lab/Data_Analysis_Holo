@@ -1,0 +1,40 @@
+#!/bin/bash
+# One array task owns one Suite2p session and one GPU.
+# Usage is handled by: python -m ai_pipeline.submit --help
+#SBATCH --job-name=suite2p
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=32
+#SBATCH --gres=gpu:1
+#SBATCH --mem=128G
+#SBATCH --partition=amperenodes
+#SBATCH --time=12:00:00
+#SBATCH --output=logs/suite2p_%A_%a.out
+#SBATCH --error=logs/suite2p_%A_%a.err
+
+set -euo pipefail
+
+if [ "$#" -ne 5 ]; then
+    echo "Expected: manifest dataframe raw_root output_root frame_rate" >&2
+    exit 2
+fi
+
+manifest=$1
+dataframe=$2
+raw_root=$3
+output_root=$4
+frame_rate=$5
+
+module load CUDA/12.2.0
+module load cuDNN/8.9.2.26-CUDA-12.2.0
+module load Anaconda3/2023.07-2
+conda activate suite2p_v1
+
+cd "${SLURM_SUBMIT_DIR}"
+python -m ai_pipeline.run_session \
+    --manifest "${manifest}" \
+    --task-id "${SLURM_ARRAY_TASK_ID}" \
+    --dataframe "${dataframe}" \
+    --raw-root "${raw_root}" \
+    --output-root "${output_root}" \
+    --frame-rate "${frame_rate}"

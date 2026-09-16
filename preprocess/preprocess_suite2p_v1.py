@@ -34,8 +34,13 @@ def process_single_session(im_dirs: List[str], voltage_rec_dirs: List[str], size
             :param default_settings_dir: path where the default ops are stored
     """
 
-    if len(im_dirs) != len(size_recordings) | len(im_dirs) != len(voltage_rec_paths):
-        raise ValueError('The sizes of the list need to be all the same')
+    if (
+        len(im_dirs) != len(size_recordings)
+        or len(im_dirs) != len(voltage_rec_dirs)
+    ):
+        raise ValueError(
+            'im_dirs, voltage_rec_dirs, and size_recordings must have the same length'
+        )
 
     bad_frames, bad_frames_bool = obtain_bad_frames_from_voltage_rec(voltage_rec_dirs, frame_rate, size_recordings)
     db = get_suite2p_holo_db(im_dirs, suite2p_save_path, bad_frames, bad_frames_bool)
