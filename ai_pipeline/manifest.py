@@ -25,6 +25,7 @@ REQUIRED_COLUMNS = {
 def select_rows(
     dataframe_path: Path,
     session_date: str | None = None,
+    session_day: str | None = None,
     mouse_id: str | None = None,
 ) -> pd.DataFrame:
     """Load the dataframe and select sessions using explicit filters."""
@@ -38,6 +39,8 @@ def select_rows(
     selected = dataframe
     if session_date is not None:
         selected = selected[selected["session_date"].eq(session_date)]
+    if session_day is not None:
+        selected = selected[selected["session_day"].eq(session_day)]
     if mouse_id is not None:
         selected = selected[selected["mouse_id"].eq(mouse_id)]
 
@@ -48,10 +51,11 @@ def write_manifest(
     dataframe_path: Path,
     manifest_path: Path,
     session_date: str | None = None,
+    session_day: str | None = None,
     mouse_id: str | None = None,
 ) -> int:
     """Write one JSON object per selected dataframe row."""
-    selected = select_rows(dataframe_path, session_date, mouse_id)
+    selected = select_rows(dataframe_path, session_date, session_day, mouse_id)
     if selected.empty:
         raise ValueError("The filters selected no sessions")
 

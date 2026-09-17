@@ -16,10 +16,13 @@ python -m ai_pipeline.submit \
   --output-root /data/project/nvl_lab/processed_suite2p \
   --frame-rate 29.752 \
   --session-date 190930 \
+  --session-day D10 \
   --mouse-id NVI12 \
   --max-parallel 2
 ```
 
+`--session-date`, `--session-day`, and `--mouse-id` are optional filters.
+`--session-day`, when provided, must start with `D` (for example, `D10`).
 `--max-parallel` limits the number of simultaneously running array tasks.
 The command prints the manifest path and SLURM job ID. The manifest is kept so
 that the exact set of sessions can be audited or resubmitted.

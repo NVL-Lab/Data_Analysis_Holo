@@ -3,11 +3,20 @@
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
 
 from ai_pipeline.manifest import write_manifest
+
+
+def _session_day(value: str) -> str:
+    if not re.fullmatch(r"D.*", value):
+        raise argparse.ArgumentTypeError(
+            "session day must match the pattern 'D*' (start with 'D')"
+        )
+    return value
 
 
 def main() -> None:
@@ -17,6 +26,7 @@ def main() -> None:
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--frame-rate", type=float, required=True)
     parser.add_argument("--session-date")
+    parser.add_argument("--session-day", type=_session_day, default=None)
     parser.add_argument("--mouse-id")
     parser.add_argument("--max-parallel", type=int, default=1)
     parser.add_argument(
@@ -41,7 +51,11 @@ def main() -> None:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     manifest_path = args.manifest_dir / f"suite2p_{timestamp}.jsonl"
     session_count = write_manifest(
-        args.dataframe, manifest_path, args.session_date, args.mouse_id
+        args.dataframe,
+        manifest_path,
+        args.session_date,
+        args.session_day,
+        args.mouse_id,
     )
     Path("logs").mkdir(exist_ok=True)
 
