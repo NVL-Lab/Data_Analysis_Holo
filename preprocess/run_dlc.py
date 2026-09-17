@@ -3,12 +3,11 @@ from typing import Optional
 from pathlib import Path
 
 def get_dlc_settings():
+
     project_settings = {
         'project': '191005_NVI12_D10',
         'experimenter': 'Nuria',
-        'videos': [
-            '/data/project/nvl_lab/HoloBMI/Behavior/191003/NVI13/base/video_2019-10-03T16_03_57_corrected.avi'
-        ],
+        'videos': [str(v) for v in Path('/data/project/nvl_lab/HoloBMI/Behavior').glob("*/*/*/*.avi")],
         'working_directory': '/home/sgurgua4/Downloads/dlc_test',
         'copy_videos': False, # False (default)
         'videotype': 'avi',
@@ -288,9 +287,6 @@ def main(project_settings: dict, frame_settings: dict, training_data_settings: d
     # =====================================================
     # Phase 1: Project Setup
     # =====================================================
-
-    # get all videos for training
-
 
     # project creation
     config_path = dlc.create_new_project(**project_settings)
