@@ -11,7 +11,7 @@ from pathlib import Path
 from ai_pipeline.manifest import write_manifest
 
 
-def _session_day(value: str) -> str:
+def _day_index(value: str) -> str:
     if not re.fullmatch(r"D.*", value):
         raise argparse.ArgumentTypeError(
             "session day must match the pattern 'D*' (start with 'D')"
@@ -26,7 +26,7 @@ def main() -> None:
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--frame-rate", type=float, required=True)
     parser.add_argument("--session-date")
-    parser.add_argument("--session-day", type=_session_day, default=None)
+    parser.add_argument("--day_index", type=_day_index, default=None)
     parser.add_argument("--mouse-id")
     parser.add_argument("--max-parallel", type=int, default=1)
     parser.add_argument(
@@ -54,7 +54,7 @@ def main() -> None:
         args.dataframe,
         manifest_path,
         args.session_date,
-        args.session_day,
+        args.day_index,
         args.mouse_id,
     )
     Path("logs").mkdir(exist_ok=True)
