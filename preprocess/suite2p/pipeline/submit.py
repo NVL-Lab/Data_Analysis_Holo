@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
 
-from ai_pipeline.manifest import write_manifest
+from preprocess.suite2p.pipeline.manifest import write_manifest
 
 
 def _day_index(value: str) -> str:
@@ -25,22 +26,42 @@ def main() -> None:
     parser.add_argument("--raw-root", type=Path, required=True)
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--frame-rate", type=float, required=True)
-    parser.add_argument("--session-date")
-    parser.add_argument("--day_index", type=_day_index, default=None)
-    parser.add_argument("--mouse-id")
-    parser.add_argument("--max-parallel", type=int, default=1)
     parser.add_argument(
-        "--manifest-dir", type=Path, default=Path("manifests")
+        "--executor",
+        choices=("slurm", "local"),
+        default="slurm",
+        help="Run through SLURM or process sessions in the current environment",
+    )
+    parser.add_argument(
+        "--conda-env",
+        default=os.environ.get("SUITE2P_CONDA_ENV"),
+        help="Conda environment for SLURM tasks (or SUITE2P_CONDA_ENV)",
+    )
+    parser.add_argument("--session-date")
+    parser.add_argument("--day-index", type=_day_index, default=None)
+    parser.add_argument("--mouse-id")
+    parser.add_argument(
+        "--max-parallel",
+        type=int,
+        default=None,
+        help="Maximum concurrent SLURM tasks; defaults to the number of selected sessions",
+    )
+    parser.add_argument(
+        "--manifest-dir",
+        type=Path,
+        default=Path("preprocess/suite2p/manifests"),
     )
     parser.add_argument(
         "--slurm-script",
         type=Path,
-        default=Path("ai_pipeline/slurm/suite2p_array.sh"),
+        default=Path("preprocess/suite2p/pipeline/slurm/suite2p_array.sh"),
     )
     args = parser.parse_args()
 
-    if args.max_parallel < 1:
+    if args.max_parallel is not None and args.max_parallel < 1:
         parser.error("--max-parallel must be at least 1")
+    if args.executor == "slurm" and not args.conda_env:
+        parser.error("--conda-env is required unless SUITE2P_CONDA_ENV is set")
     if not args.dataframe.is_file():
         parser.error(f"Dataframe does not exist: {args.dataframe}")
     if not args.raw_root.is_dir():
@@ -57,9 +78,27 @@ def main() -> None:
         args.day_index,
         args.mouse_id,
     )
-    Path("logs").mkdir(exist_ok=True)
+    max_parallel = session_count if args.max_parallel is None else min(args.max_parallel, session_count)
 
-    array = f"0-{session_count - 1}%{args.max_parallel}"
+    if args.executor == "local":
+        from preprocess.suite2p.pipeline.run_session import run_session
+
+        for task_id in range(session_count):
+            run_session(
+                manifest_path,
+                task_id,
+                args.dataframe,
+                args.raw_root,
+                args.output_root,
+                args.frame_rate,
+            )
+        print(f"Processed sessions: {session_count}")
+        print(f"Manifest: {manifest_path}")
+        return
+
+    Path("preprocess/suite2p/logs").mkdir(parents=True, exist_ok=True)
+
+    array = f"0-{session_count - 1}%{max_parallel}"
     command = [
         "sbatch",
         f"--array={array}",
@@ -69,6 +108,7 @@ def main() -> None:
         str(args.raw_root),
         str(args.output_root),
         str(args.frame_rate),
+        args.conda_env,
     ]
     result = subprocess.run(command, check=True, text=True, capture_output=True)
     print(f"Manifest: {manifest_path}")

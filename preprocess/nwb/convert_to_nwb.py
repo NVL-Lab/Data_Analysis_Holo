@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 __author__ = 'Nuria'
 
 # __author__ = ('Nuria', 'John Doe')
@@ -9,36 +11,33 @@ __author__ = 'Nuria'
 # make sure the ndx-templates for CaBMI and Holographic_stim are installed
 # (see repositories in lab's github)
 
+import argparse
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from pathlib import Path
+from typing import Optional, Tuple
+from zoneinfo import ZoneInfo
+
 import numpy as np
 import pandas as pd
-import xml.etree.ElementTree as ET
+from scipy.io import loadmat
 from pynwb.device import Device, DeviceModel
-from typing import Optional, Tuple
-import argparse
-
+from pynwb import NWBHDF5IO, TimeSeries, ogen
 from ndx_holostim import LightSource, SpatialLightModulator
 from ndx_holostim import PatternedOptogeneticSeries, SpiralScanning, PatternedOptogeneticStimulusSite
 from ndx_cabmi import Parameters_BMI, ROI_metadata, Calibration_metadata, CaBMISeries
-
-from scipy.io import loadmat
-from pynwb import NWBHDF5IO, TimeSeries, ogen
-from pathlib import Path
-from datetime import datetime
-from zoneinfo import ZoneInfo
 from neuroconv.converters import BrukerTiffSinglePlaneConverter
 from neuroconv.datainterfaces import ExternalVideoInterface
 from neuroconv.utils import dict_deep_update
+from dataframe import dataframe_sessions as ds
+import syncronize_voltage_rec as svr
 
-from preprocess import dataframe_sessions as ds
-from preprocess import syncronize_voltage_rec as svr
-from utils.analysis_configuration import AnalysisConfiguration as aconf
-from utils.analysis_constants import AnalysisConstants as act
-from utils.params import get_nwb_params
 
 def convert_bruker_images_to_nwb(folder_path: Path, microscope: Device, nwbfile_path: str):
     """ function to convert a bruker tiff file recording to nwb
     :param folder_path: path to the folder containing the tiff files
     :param nwbfile_path: path where we want to store the nwb file"""
+    _require_nwb_runtime()
     # convert data to nwb
     converter = BrukerTiffSinglePlaneConverter(folder_path=folder_path)
     metadata = converter.get_metadata()
@@ -87,6 +86,7 @@ def convert_all_experiments_to_nwb(folder_raw: Path, experiment_type: Optional[s
     """function to convert all experiments within a experiment type to nwb
     :param folder_raw: folder where all the raw files are located
     :param experiment_type: the type of experiment to process if None all are done"""
+    _require_nwb_runtime()
     # get the dataframe with all the session in experiment type.
     df_sessions = ds.get_sessions_df(experiment_type)
     folder_nwb = folder_raw.parents[0] / 'nwb'
@@ -1323,10 +1323,11 @@ def convert_holoseq_to_nwb(row: pd.DataFrame, folder_nwb_mice: str, folder_raw: 
 def convert_experiment_to_nwb(index: int, folder_save: str, folder_raw: str, behavior_folder_raw: str, experiment_type: Optional[str]=None):
     #experiment_type is not optional
     #need model obect instead of string for spatial light modulator
-    
+
     # Error with model in spatiallightmodulator
     # convert_bruker_images_to_nwb() missing 1 required positional argument: 'nwbfile_path' (3 times)
-    
+    _require_nwb_runtime()
+
     """function to convert all experiments within a experiment type to nwb
     :param folder_raw: folder where all the raw files are located
     :param experiment_type: the type of experiment to process if None all are done"""
@@ -1354,10 +1355,25 @@ def convert_experiment_to_nwb(index: int, folder_save: str, folder_raw: str, beh
     #convert_bmi_to_nwb(row, folder_nwb_mice, folder_raw)
     convert_behavior_to_nwb(row, folder_nwb_mice, behavior_folder_raw)
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Run nwb conversion')
-    parser.add_argument('row_index', type=int, help='row of dataframe')
-    args = parser.parse_args()
+def main(argv=None) -> None:
+    """Small CLI entry point for a single-session NWB conversion."""
+    parser = argparse.ArgumentParser(description='Run NWB conversion for one dataframe row.')
+    parser.add_argument('--row-index', type=int, required=True, help='Row index in the dataframe to convert.')
+    parser.add_argument('--folder-save', type=Path, default=Path('pipeline'))
+    parser.add_argument('--folder-raw', type=Path, required=True)
+    parser.add_argument('--behavior-folder-raw', type=Path, default=None)
+    parser.add_argument('--experiment-type', default=None)
+    args = parser.parse_args(argv)
 
-    nwb_params = get_nwb_params()
-    convert_experiment_to_nwb(args.row_index, nwb_params['folder_save'], nwb_params['folder_raw'], nwb_params['behavior_folder_raw'])
+    _require_nwb_runtime()
+    kwargs = {
+        'folder_save': str(args.folder_save),
+        'folder_raw': str(args.folder_raw),
+        'behavior_folder_raw': str(args.behavior_folder_raw) if args.behavior_folder_raw is not None else str(args.folder_raw),
+        'experiment_type': args.experiment_type,
+    }
+    convert_experiment_to_nwb(args.row_index, **kwargs)
+
+
+if __name__ == '__main__':
+    main()

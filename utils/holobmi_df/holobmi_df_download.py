@@ -1,4 +1,4 @@
-import dataframe_sessions
+from dataframe import dataframe_sessions
 
 if __name__ == '__main__':
     sessions, issues = dataframe_sessions.get_sessions()

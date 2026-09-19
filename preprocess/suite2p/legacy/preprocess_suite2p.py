@@ -6,11 +6,11 @@ import pandas as pd
 import numpy as np
 
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 
 from suite2p.run_s2p import run_s2p
 
-import preprocess.syncronize_voltage_rec as svr
+import syncronize_voltage_rec as svr
 
 
 def obtain_bad_frames_from_voltage_rec(voltage_rec_paths: List[str], frame_rate: float,

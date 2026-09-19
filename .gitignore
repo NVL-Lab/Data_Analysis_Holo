@@ -15,3 +15,10 @@ preprocess/camera.csv
 preprocess/final_sync.csv
 preprocess/sync_2019-10-01T13_28_00 - Copy.csv
 
+# Suite2p pipeline runtime files
+preprocess/suite2p/logs/
+preprocess/suite2p/manifests/
+
+# nwb pipeline runtime files
+preprocess/nwb/logs/
+preprocess/nwb/manifests/

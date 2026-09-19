@@ -7,8 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from ai_pipeline.manifest import read_manifest_entry
-from preprocess.preprocess_suite2p_v1 import process_single_session
+from preprocess.suite2p.pipeline.manifest import read_manifest_entry
 
 
 IMAGE_COLUMNS = (
@@ -75,6 +74,14 @@ def run_session(
     image_paths, voltage_paths, recording_sizes = _required_paths(row, raw_root)
     output_path = output_root / str(row["session_path"])
     output_path.mkdir(parents=True, exist_ok=True)
+
+    try:
+        from suite2p.utils.core import process_single_session
+    except ImportError as exc:  # pragma: no cover - runtime dependency guard
+        raise RuntimeError(
+            "Suite2p runtime dependencies are unavailable. Activate the correct "
+            "Suite2p environment before running a session."
+        ) from exc
 
     process_single_session(
         image_paths,

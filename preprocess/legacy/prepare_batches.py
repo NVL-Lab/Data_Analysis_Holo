@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-from dataframe_sessions import get_sessions_df
+from dataframe.dataframe_sessions import get_sessions_df
 
 # Load the experiment session dataframe
 df = get_sessions_df('hE2_rew')

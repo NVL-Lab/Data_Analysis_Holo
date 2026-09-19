@@ -1,6 +1,5 @@
 import collections
 import os
-import sys
 
 import pandas as pd
 import numpy as np
@@ -8,9 +7,9 @@ from pathlib import Path
 from datetime import datetime
 from typing import Tuple
 import re
-from preprocess.session_paths import _hE2_rew,_hE2_norew,_hE2_rew_fb,_hE3_rew,_No_Reward_Pretrain,_randrew,_randrew_fb,_BMI
+from legacy.session_paths import _hE2_rew,_hE2_norew,_hE2_rew_fb,_hE3_rew,_No_Reward_Pretrain,_randrew,_randrew_fb,_BMI
 from utils.analysis_constants import AnalysisConstants as act
-from preprocess.get_session_paths import get_session_paths
+from legacy.get_session_paths import get_session_paths
 
 from concurrent.futures import ThreadPoolExecutor
 from fnmatch import fnmatch
