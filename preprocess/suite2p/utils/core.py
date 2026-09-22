@@ -6,12 +6,8 @@ from pathlib import Path
 from typing import Any, Sequence
 
 import numpy as np
-
-try:
-    import suite2p  # type: ignore
-except ImportError:  # pragma: no cover - optional runtime dependency
-    suite2p = None
-
+import suite2p
+import preprocess.syncronize_voltage_rec as svr
 
 __all__ = [
     "get_settings",
@@ -57,7 +53,6 @@ def obtain_bad_frames_from_voltage_rec(
     size_recordings: Sequence[int],
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return bad-frame indices and a boolean mask for a whole session."""
-    import syncronize_voltage_rec as svr
 
     indices: list[np.ndarray] = [np.array([], dtype=int)]
     len_recording = 0

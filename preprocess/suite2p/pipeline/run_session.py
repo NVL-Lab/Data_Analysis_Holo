@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 from preprocess.suite2p.pipeline.manifest import read_manifest_entry
-from preprocess.suite2p.core import process_single_session
+from preprocess.suite2p.utils.core import process_single_session
 
 IMAGE_COLUMNS = (
     "holostim_seq_im_path",
