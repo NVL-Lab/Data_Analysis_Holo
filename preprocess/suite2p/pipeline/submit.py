@@ -54,7 +54,7 @@ def main() -> None:
     parser.add_argument(
         "--slurm-script",
         type=Path,
-        default=Path("preprocess/suite2p/pipeline/slurm/suite2p_array.sh"),
+        default=Path("preprocess/suite2p/suite2p_array.sh"),
     )
     args = parser.parse_args()
 
