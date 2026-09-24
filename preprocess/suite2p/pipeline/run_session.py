@@ -93,6 +93,10 @@ def main() -> None:
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--frame-rate", type=float, required=True)
     args = parser.parse_args()
+    print("Suite2p pipeline parameters:")
+    for name, value in sorted(vars(args).items()):
+        print(f"  {name}={value!r}")
+
     run_session(
         args.manifest,
         args.task_id,

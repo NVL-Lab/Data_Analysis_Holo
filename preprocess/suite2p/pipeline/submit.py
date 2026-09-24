@@ -12,6 +12,12 @@ from pathlib import Path
 from preprocess.suite2p.pipeline.manifest import write_manifest
 
 
+def _print_parameters(parameters: argparse.Namespace) -> None:
+    print("Suite2p pipeline parameters:")
+    for name, value in sorted(vars(parameters).items()):
+        print(f"  {name}={value!r}")
+
+
 def _day_index(value: str) -> str:
     if not re.fullmatch(r"D.*", value):
         raise argparse.ArgumentTypeError(
@@ -57,6 +63,7 @@ def main() -> None:
         default=Path("preprocess/suite2p/suite2p_array.sh"),
     )
     args = parser.parse_args()
+    _print_parameters(args)
 
     if args.max_parallel is not None and args.max_parallel < 1:
         parser.error("--max-parallel must be at least 1")

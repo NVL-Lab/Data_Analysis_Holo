@@ -27,8 +27,13 @@ class Suite2pSubmitter(tk.Tk):
         self.title("Suite2p Pipeline")
         self.minsize(700, 500)
 
-        self.dataframe = tk.StringVar()
-        self.raw_root = tk.StringVar()
+        default_dataframe = Path("./utils/holobmi_df/holobmi_df.parquet")
+        self.dataframe = tk.StringVar(
+            value=str(default_dataframe) if default_dataframe.is_file() else ""
+        )
+        self.raw_root = tk.StringVar(
+            value="/data/project/nvl_lab/HoloBMI/Raw"
+        )
         self.output_root = tk.StringVar()
         self.frame_rate = tk.StringVar(value="29.752")
         self.executor = tk.StringVar(value="slurm")
