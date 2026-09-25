@@ -27,7 +27,10 @@ class Suite2pSubmitter(tk.Tk):
         self.title("Suite2p Pipeline")
         self.minsize(700, 500)
 
-        default_dataframe = Path("./utils/holobmi_df/holobmi_df.parquet")
+        repository_root = Path(__file__).resolve().parents[2]
+        default_dataframe = (
+            repository_root / "utils" / "holobmi_df" / "holobmi_df.parquet"
+        ).resolve()
         self.dataframe = tk.StringVar(
             value=str(default_dataframe) if default_dataframe.is_file() else ""
         )
