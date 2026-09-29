@@ -29,7 +29,7 @@ def _require_suite2p() -> Any:
 
 def get_settings(default_settings_dir: str | Path | None, settings: dict | None = None) -> dict:
     """Return a Suite2p settings dictionary, optionally loading a saved defaults file."""
-    from utils.suite2p_v1_config import get_suite2p_holo_settings
+    from suite2p.utils.suite2p_v1_config import get_suite2p_holo_settings
 
     if settings is None:
         settings = _require_suite2p().default_settings()
@@ -154,7 +154,7 @@ def process_single_session(
             "im_dirs, voltage_rec_dirs, and size_recordings must have the same length"
         )
 
-    from utils.suite2p_v1_config import get_suite2p_holo_db
+    from suite2p.utils.suite2p_v1_config import get_suite2p_holo_db
 
     suite2p_runtime = _require_suite2p()
     bad_frames, bad_frames_bool = obtain_bad_frames_from_voltage_rec(

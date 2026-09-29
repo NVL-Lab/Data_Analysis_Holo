@@ -8,7 +8,7 @@ from pathlib import Path
 import contextlib
 import suite2p
 
-from utils.suite2p_v1_config import get_suite2p_holo_db
+from suite2p.utils.suite2p_v1_config import get_suite2p_holo_db
 
 def main():
     s2p = importlib.import_module('suite2p.run_s2p')

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from suite2p.legacy.preprocess_suite2p import process_1_session_suite2p_offline
 from suite2p.legacy.preprocess_suite2p_v1 import process_single_session
-from utils.params import get_suite2p_params
+#from utils.params import get_suite2p_params
 
 def run_all_suite2p_local(df: pd.DataFrame, default_path: Path, folder_save: Path, folder_raw: Path, frame_rate:float):
     """ function to run and process all experiments with suite2p locally"""
@@ -66,5 +66,5 @@ if __name__ == '__main__':
     parser.add_argument('row_index', type=int, help='row of dataframe')
     args = parser.parse_args()
 
-    suite2p_params = get_suite2p_params()
+    #suite2p_params = get_suite2p_params()
     run_suite2p_local(args.row_index, suite2p_params['df_dir'], suite2p_params['folder_save'], suite2p_params['folder_raw'], suite2p_params['frame_rate'], suite2p_params['default_path'])

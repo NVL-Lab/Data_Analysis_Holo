@@ -29,7 +29,7 @@ class Suite2pSubmitter(tk.Tk):
 
         repository_root = Path(__file__).resolve().parents[2]
         default_dataframe = (
-            repository_root / "utils" / "holobmi_df" / "holobmi_df.parquet"
+            repository_root / "utils" / "dataframes" / "dataframes.parquet"
         ).resolve()
         self.dataframe = tk.StringVar(
             value=str(default_dataframe) if default_dataframe.is_file() else ""

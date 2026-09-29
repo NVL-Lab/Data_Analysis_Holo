@@ -29,7 +29,7 @@ from ndx_cabmi import Parameters_BMI, ROI_metadata, Calibration_metadata, CaBMIS
 from neuroconv.converters import BrukerTiffSinglePlaneConverter
 from neuroconv.datainterfaces import ExternalVideoInterface
 from neuroconv.utils import dict_deep_update
-from dataframe import dataframe_sessions as ds
+import dataframe_sessions as ds
 import syncronize_voltage_rec as svr
 
 

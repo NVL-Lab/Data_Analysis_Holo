@@ -35,7 +35,7 @@ needed:
 
 ```bash
 python -m preprocess.suite2p.pipeline.submit \
-  --dataframe /path/to/holobmi_df.parquet \
+  --dataframe /path/to/dataframes.parquet \
   --raw-root /data/project/nvl_lab/HoloBMI/Raw \
   --output-root /data/project/nvl_lab/processed_suite2p \
   --frame-rate 29.752 \

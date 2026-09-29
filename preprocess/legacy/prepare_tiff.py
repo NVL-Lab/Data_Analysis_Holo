@@ -1,7 +1,7 @@
 import pandas as pd
 from pathlib import Path
 import json
-from dataframe.dataframe_sessions import get_sessions_df
+from dataframe_sessions import get_sessions_df
 
 df = get_sessions_df('hE2_rew')
 # Define TIFF limits for each category

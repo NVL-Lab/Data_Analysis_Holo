@@ -11,6 +11,8 @@
 #SBATCH --output=preprocess/nwb/logs/nwb_%A_%a.out
 #SBATCH --error=preprocess/nwb/logs/nwb_%A_%a.err
 
+SECONDS=0
+
 set -euo pipefail
 
 if [ "$#" -ne 6 ]; then
@@ -36,3 +38,9 @@ python -m preprocess.nwb.pipeline.run_session \
     --raw-root "${raw_root}" \
     --output-root "${output_root}" \
     --behavior-root "${behavior_root}"
+
+duration=$SECONDS
+printf "Time elapsed: %02d:%02d:%02d\n" \
+    $((duration/3600)) \
+    $((duration%3600/60)) \
+    $((duration%60))

@@ -5,7 +5,7 @@ import numpy as np
 
 from typing import List
 
-from utils.suite2p_v1_config import *
+from suite2p.utils.suite2p_v1_config import *
 from suite2p.legacy.preprocess_suite2p import obtain_bad_frames_from_voltage_rec
 
 def get_settings(default_settings_dir, settings = suite2p.default_settings()) -> dict:

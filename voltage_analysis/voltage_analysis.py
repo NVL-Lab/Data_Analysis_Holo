@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     # Method for acquiring raw data
     if read_df:
-        # ~/project/nvl_lab/holo_bmi/Data_Analysis_Holo/holobmi_df.parquet
+        # ~/project/nvl_lab/holo_bmi/Data_Analysis_Holo/dataframes/holobmi_df.parquet
         info = get_data_df(args[0])
     else:
         # /data/project/nvl_lab/HoloBMI/Raw
