@@ -8,6 +8,7 @@ from typing import Any, Sequence
 import numpy as np
 import suite2p
 import preprocess.syncronize_voltage_rec as svr
+from suite2p.utils.suite2p_v1_config import get_suite2p_holo_db
 
 __all__ = [
     "get_settings",
@@ -153,8 +154,6 @@ def process_single_session(
         raise ValueError(
             "im_dirs, voltage_rec_dirs, and size_recordings must have the same length"
         )
-
-    from suite2p.utils.suite2p_v1_config import get_suite2p_holo_db
 
     suite2p_runtime = _require_suite2p()
     bad_frames, bad_frames_bool = obtain_bad_frames_from_voltage_rec(
