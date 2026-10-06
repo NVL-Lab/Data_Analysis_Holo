@@ -18,9 +18,9 @@ def get_suite2p_holo_db(im_dirs, suite2p_save_path, bad_frames, bad_frames_bool)
     db['fast_disk'] = db['save_path0']
 
     if bad_frames_bool.any():
-        print(bad_frames_bool)
-        print(bad_frames)
         np.save(Path(db['data_path'][0]) / 'bad_frames.npy', bad_frames)
+        check = np.load(Path(db['data_path'][0]) / 'bad_frames.npy')
+        print(check)
         db['bad_frames'] = bad_frames
 
     return db
