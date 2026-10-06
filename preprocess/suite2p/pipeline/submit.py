@@ -43,6 +43,10 @@ def main() -> None:
         default=os.environ.get("SUITE2P_CONDA_ENV"),
         help="Conda environment for SLURM tasks (or SUITE2P_CONDA_ENV)",
     )
+    parser.add_argument(
+        "--email",
+        help="Email address for SLURM notifications",
+    )
     parser.add_argument("--session-date")
     parser.add_argument("--day-index", type=_day_index, default=None)
     parser.add_argument("--mouse-id")
@@ -108,6 +112,7 @@ def main() -> None:
     array = f"0-{session_count - 1}%{max_parallel}"
     command = [
         "sbatch",
+        "--mail-type=ALL",
         f"--array={array}",
         str(args.slurm_script),
         str(manifest_path),
@@ -117,6 +122,8 @@ def main() -> None:
         str(args.frame_rate),
         args.conda_env,
     ]
+    if args.email:
+        command.insert(2, f"--mail-user={args.email}")
     result = subprocess.run(command, check=True, text=True, capture_output=True)
     print(f"Manifest: {manifest_path}")
     print(f"Selected sessions: {session_count}")

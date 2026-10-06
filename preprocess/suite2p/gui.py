@@ -43,6 +43,7 @@ class Suite2pSubmitter(tk.Tk):
         self.conda_env = tk.StringVar(
             value=os.environ.get("SUITE2P_CONDA_ENV", "")
         )
+        self.email = tk.StringVar()
         self.session_date = tk.StringVar()
         self.day_index = tk.StringVar()
         self.mouse_id = tk.StringVar()
@@ -84,6 +85,7 @@ class Suite2pSubmitter(tk.Tk):
         options = (
             ("Frame rate", self.frame_rate),
             ("Conda environment", self.conda_env),
+            ("Email for SLURM notifications", self.email),
             ("Session date (optional)", self.session_date),
             ("Day index (optional)", self.day_index),
             ("Mouse ID (optional)", self.mouse_id),
@@ -171,6 +173,7 @@ class Suite2pSubmitter(tk.Tk):
                 raise ValueError(
                     "Enter the conda environment used by the SLURM job."
                 )
+            email = self.email.get().strip()
             max_parallel = int(self.max_parallel.get())
             if max_parallel < 1:
                 raise ValueError("Maximum parallel jobs must be at least 1.")
@@ -200,6 +203,8 @@ class Suite2pSubmitter(tk.Tk):
         ]
         if self.executor.get() == "slurm":
             command.extend(("--conda-env", conda_env))
+            if email:
+                command.extend(("--email", email))
         optional = (
             ("--session-date", self.session_date.get().strip()),
             ("--day-index", day_index),

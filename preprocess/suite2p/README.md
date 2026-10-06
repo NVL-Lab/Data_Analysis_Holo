@@ -16,6 +16,7 @@ python -m preprocess.suite2p.pipeline.submit \
   --frame-rate 29.752 \
   --executor slurm \
   --conda-env my_suite2p_environment \
+  --email you@example.com \
   --session-date 190930 \
   --day-index D10 \
   --mouse-id NVI12 \
@@ -28,6 +29,11 @@ It is required unless `SUITE2P_CONDA_ENV` is set in the submission shell:
 ```bash
 export SUITE2P_CONDA_ENV=my_suite2p_environment
 ```
+
+`--email` is optional for SLURM submissions. When provided, SLURM uses it with
+`--mail-type=ALL` to send notifications to that address for all supported job
+events, including completion, failure, cancellation, and requeue. When omitted,
+SLURM uses its configured default notification address, if one exists.
 
 To run without SLURM, use the local executor. It processes selected sessions
 sequentially in the current Python environment, so `--conda-env` is not
