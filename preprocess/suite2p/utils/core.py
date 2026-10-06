@@ -8,7 +8,7 @@ from typing import Any, Sequence
 import numpy as np
 import suite2p
 import preprocess.syncronize_voltage_rec as svr
-from preprocess.suite2p.utils.suite2p_v1_config import get_suite2p_holo_db
+from preprocess.suite2p.utils.suite2p_v1_config import get_suite2p_holo_db, get_suite2p_holo_settings
 
 __all__ = [
     "get_settings",
@@ -30,7 +30,6 @@ def _require_suite2p() -> Any:
 
 def get_settings(default_settings_dir: str | Path | None, settings: dict | None = None) -> dict:
     """Return a Suite2p settings dictionary, optionally loading a saved defaults file."""
-    from suite2p.utils.suite2p_v1_config import get_suite2p_holo_settings
 
     if settings is None:
         settings = _require_suite2p().default_settings()
